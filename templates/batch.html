@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+{% block title %}RiskSense AI — Batch Screening{% endblock %}
+
+{% block head %}
+<style>
+    .batch-hero {
+        text-align: center;
+        padding: var(--space-3xl) 0 var(--space-2xl);
+    }
+    .batch-hero h1 {
+        font-size: clamp(1.75rem, 4vw, 2.5rem);
+        font-weight: 900;
+        letter-spacing: -0.03em;
+        margin-bottom: var(--space-sm);
+    }
+    .batch-hero p { color: var(--text-secondary); font-size: 1rem; }
+
+    .batch-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-xl);
+        margin-bottom: var(--space-xl);
+    }
+    @media (max-width: 900px) { .batch-layout { grid-template-columns: 1fr; } }
+
+    .upload-zone {
+        border: 2px dashed var(--glass-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-3xl) var(--space-2xl);
+        text-align: center;
+        cursor: pointer;
+        transition: all var(--transition-base);
+        background: var(--glass-bg);
+        position: relative;
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+        border-color: rgba(124, 58, 237, 0.5);
+        background: rgba(124, 58, 237, 0.05);
+        transform: translateY(-2px);
+    }
+    .upload-icon { font-size: 2.5rem; margin-bottom: var(--space-md); }
+    .upload-zone h3 { font-size: 1rem; font-weight: 700; margin-bottom: var(--space-sm); }
+    .upload-zone p { font-size: 0.82rem; color: var(--text-secondary); margin-bottom: var(--space-lg); }
+    #csvFileInput { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+    .csv-format-card { padding: var(--space-xl); }
+    .csv-format-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: var(--space-md); }
+    .csv-columns {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+    }
+    .csv-col {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--space-xs) var(--space-sm);
+        background: var(--glass-bg);
+        border-radius: var(--radius-sm);
+        font-size: 0.8rem;
+    }
+    .csv-col-name { font-family: var(--font-mono); color: var(--accent-tertiary); }
+    .csv-col-type { color: var(--text-tertiary); font-size: 0.72rem; }
+    .download-template-btn {
+        margin-top: var(--space-md);
+        width: 100%;
+    }
+
+    /* Progress */
+    .batch-progress-section { padding: var(--space-xl); margin-bottom: var(--space-xl); display: none; }
+    .batch-progress-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: var(--space-md);
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    .batch-progress-bar {
+        width: 100%;
+        height: 8px;
+        background: var(--glass-bg);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: var(--space-md);
+    }
+    .batch-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent-primary), var(--accent-tertiary));
+        transition: width 0.3s ease;
+        width: 0%;
+    }
+    .batch-status { font-size: 0.8rem; color: var(--text-secondary); }
+
+    /* Summary Cards */
+    .batch-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-md); margin-bottom: var(--space-xl); }
+    @media (max-width: 700px) { .batch-summary { grid-template-columns: repeat(2, 1fr); } }
+    .batch-kpi { padding: var(--space-lg); text-align: center; }
+    .batch-kpi-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); margin-bottom: var(--space-sm); }
+    .batch-kpi-value { font-size: 1.8rem; font-weight: 900; font-family: var(--font-mono); line-height: 1; }
+
+    /* Results Table */
+    .results-section { padding: var(--space-xl); }
+    .results-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .results-table th {
+        text-align: left;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-tertiary);
+        padding: var(--space-sm) var(--space-md);
+        border-bottom: 1px solid var(--glass-border);
+    }
+    .results-table td {
+        padding: var(--space-sm) var(--space-md);
+        border-bottom: 1px solid rgba(255,255,255,0.03);
+        vertical-align: middle;
+    }
+    .results-table tr:hover td { background: var(--glass-bg); }
+    .results-table tr.fraud-row td { background: rgba(239, 68, 68, 0.04); }
+
+    .risk-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        border-radius: 100px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        font-family: var(--font-mono);
+    }
+    .risk-pill.high { background: var(--color-danger-bg); color: var(--color-danger); }
+    .risk-pill.medium { background: var(--color-warning-bg); color: var(--color-warning); }
+    .risk-pill.low { background: var(--color-success-bg); color: var(--color-success); }
+
+    .table-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: var(--space-lg);
+        flex-wrap: wrap;
+        gap: var(--space-md);
+    }
+    .filter-btns { display: flex; gap: var(--space-sm); }
+    .filter-btn {
+        padding: 4px 12px;
+        border-radius: 100px;
+        border: 1px solid var(--glass-border);
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 0.78rem;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+    .filter-btn.active, .filter-btn:hover {
+        background: rgba(124, 58, 237, 0.15);
+        border-color: rgba(124, 58, 237, 0.4);
+        color: var(--text-primary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="batch-hero reveal">
+        <div class="badge badge-accent mb-md">⬡ Batch Screening</div>
+        <h1>Bulk Fraud Screening</h1>
+        <p>Upload a CSV of loan applications — screen hundreds of records in seconds</p>
+    </div>
+
+    <div class="batch-layout">
+        <!-- Upload Zone -->
+        <div class="glass-card no-hover reveal" style="padding: var(--space-xl);">
+            <div class="upload-zone" id="uploadZone">
+                <input type="file" id="csvFileInput" accept=".csv" aria-label="Upload CSV file">
+                <div class="upload-icon">📁</div>
+                <h3>Drop CSV File Here</h3>
+                <p>or click to browse</p>
+                <span class="btn btn-primary btn-sm" style="pointer-events:none;">Choose File</span>
+            </div>
+            <div style="margin-top: var(--space-lg); text-align: center;">
+                <button class="btn btn-secondary btn-sm" id="loadSampleBtn">🎲 Load Sample Data (10 records)</button>
+            </div>
+        </div>
+
+        <!-- CSV Format Guide -->
+        <div class="glass-card no-hover csv-format-card reveal" style="transition-delay:0.1s;">
+            <h3>📋 Required CSV Columns</h3>
+            <div class="csv-columns">
+                <div class="csv-col"><span class="csv-col-name">loan_type</span><span class="csv-col-type">text</span></div>
+                <div class="csv-col"><span class="csv-col-name">loan_amount</span><span class="csv-col-type">number</span></div>
+                <div class="csv-col"><span class="csv-col-name">tenure</span><span class="csv-col-type">integer (months)</span></div>
+                <div class="csv-col"><span class="csv-col-name">interest</span><span class="csv-col-type">decimal (%)</span></div>
+                <div class="csv-col"><span class="csv-col-name">purpose</span><span class="csv-col-type">text</span></div>
+                <div class="csv-col"><span class="csv-col-name">employment</span><span class="csv-col-type">text</span></div>
+                <div class="csv-col"><span class="csv-col-name">income</span><span class="csv-col-type">number</span></div>
+                <div class="csv-col"><span class="csv-col-name">cibil</span><span class="csv-col-type">integer (300–900)</span></div>
+                <div class="csv-col"><span class="csv-col-name">emis</span><span class="csv-col-type">number</span></div>
+                <div class="csv-col"><span class="csv-col-name">dti</span><span class="csv-col-type">decimal (0–1)</span></div>
+                <div class="csv-col"><span class="csv-col-name">property</span><span class="csv-col-type">text</span></div>
+                <div class="csv-col"><span class="csv-col-name">age</span><span class="csv-col-type">integer</span></div>
+                <div class="csv-col"><span class="csv-col-name">gender</span><span class="csv-col-type">text</span></div>
+                <div class="csv-col"><span class="csv-col-name">dependents</span><span class="csv-col-type">integer</span></div>
+            </div>
+            <button class="btn btn-outline btn-sm download-template-btn" id="downloadTemplateBtn">⬇ Download CSV Template</button>
+        </div>
+    </div>
+
+    <!-- Progress Section -->
+    <div class="glass-card no-hover batch-progress-section" id="progressSection">
+        <div class="batch-progress-header">
+            <span id="progressLabel">Processing...</span>
+            <span id="progressPct">0%</span>
+        </div>
+        <div class="batch-progress-bar">
+            <div class="batch-progress-fill" id="progressFill"></div>
+        </div>
+        <div class="batch-status" id="progressStatus">Initializing batch pipeline...</div>
+    </div>
+
+    <!-- Summary KPIs -->
+    <div class="batch-summary stagger-children" id="batchSummary" style="display:none;">
+        <div class="glass-card batch-kpi">
+            <div class="batch-kpi-label">Total Screened</div>
+            <div class="batch-kpi-value" id="bkpiTotal">0</div>
+        </div>
+        <div class="glass-card batch-kpi">
+            <div class="batch-kpi-label">Fraud Flagged</div>
+            <div class="batch-kpi-value" id="bkpiFraud" style="color: var(--color-danger);">0</div>
+        </div>
+        <div class="glass-card batch-kpi">
+            <div class="batch-kpi-label">Fraud Rate</div>
+            <div class="batch-kpi-value" id="bkpiRate" style="color: var(--color-warning);">0%</div>
+        </div>
+        <div class="glass-card batch-kpi">
+            <div class="batch-kpi-label">Exposure Value</div>
+            <div class="batch-kpi-value" id="bkpiExposure" style="color: var(--color-danger); font-size: 1.2rem;">$0</div>
+        </div>
+    </div>
+
+    <!-- Results Table -->
+    <div class="glass-card no-hover results-section" id="resultsSection" style="display:none;">
+        <div class="table-toolbar">
+            <h3 style="font-size:0.95rem;font-weight:700;">Screening Results</h3>
+            <div style="display:flex;gap:var(--space-md);align-items:center;flex-wrap:wrap;">
+                <div class="filter-btns">
+                    <button class="filter-btn active" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="fraud">🔴 Fraud</button>
+                    <button class="filter-btn" data-filter="genuine">🟢 Genuine</button>
+                </div>
+                <button class="btn btn-outline btn-sm" id="exportCsvBtn">⬇ Export Results CSV</button>
+            </div>
+        </div>
+        <div style="overflow-x:auto;">
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Loan Type</th>
+                        <th>Amount</th>
+                        <th>Result</th>
+                        <th>Probability</th>
+                        <th>Risk Score</th>
+                        <th>Decision</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsTbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/batch.js') }}"></script>
+{% endblock %}

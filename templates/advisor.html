@@ -1,0 +1,404 @@
+{% extends "base.html" %}
+{% block title %}RiskSense AI — AI Advisor{% endblock %}
+
+{% block head %}
+<style>
+    .advisor-layout {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: var(--space-xl);
+        padding: var(--space-xl) 0 var(--space-4xl);
+        align-items: start;
+    }
+
+    @media (max-width: 900px) {
+        .advisor-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* ---- Sidebar ---- */
+    .advisor-sidebar {}
+
+    .advisor-header {
+        padding: var(--space-xl);
+        margin-bottom: var(--space-md);
+    }
+
+    .advisor-header h1 {
+        font-size: 1.4rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        margin-bottom: var(--space-xs);
+    }
+
+    .advisor-header p {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+
+    .advisor-status {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        margin-top: var(--space-md);
+        padding-top: var(--space-md);
+        border-top: 1px solid var(--glass-border);
+        font-size: 0.8rem;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--color-success);
+        animation: pulse 2s ease-in-out infinite;
+        flex-shrink: 0;
+    }
+
+    .context-card {
+        padding: var(--space-lg);
+        margin-bottom: var(--space-md);
+    }
+
+    .context-label {
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-tertiary);
+        margin-bottom: var(--space-sm);
+    }
+
+    .context-linked {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        font-size: 0.85rem;
+        color: var(--color-success);
+        font-weight: 600;
+    }
+
+    .context-linked-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--color-success);
+        animation: pulse 2s infinite;
+        flex-shrink: 0;
+    }
+
+    .context-unlinked {
+        font-size: 0.82rem;
+        color: var(--text-tertiary);
+        line-height: 1.5;
+    }
+
+    .context-unlinked a {
+        color: var(--accent-tertiary);
+        text-decoration: underline;
+        text-underline-offset: 2px;
+    }
+
+    .suggestions-sidebar {
+        padding: var(--space-lg);
+    }
+
+    .suggestions-sidebar .context-label {
+        margin-bottom: var(--space-md);
+    }
+
+    .suggestion-chip {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: var(--space-sm) var(--space-md);
+        border: 1px solid var(--glass-border);
+        background: var(--glass-bg);
+        border-radius: var(--radius-sm);
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        margin-bottom: var(--space-xs);
+    }
+
+    .suggestion-chip:hover {
+        background: var(--glass-bg-hover);
+        border-color: rgba(124, 58, 237, 0.3);
+        color: var(--text-primary);
+        transform: translateX(4px);
+    }
+
+    /* ---- Chat Interface ---- */
+    .chat-interface {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-md);
+    }
+
+    .chat-window {
+        min-height: 420px;
+        max-height: 580px;
+        overflow-y: auto;
+        padding: var(--space-xl);
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-lg);
+        scrollbar-width: thin;
+        scrollbar-color: var(--glass-border) transparent;
+    }
+
+    .chat-window::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .chat-window::-webkit-scrollbar-thumb {
+        background: var(--glass-border);
+        border-radius: 4px;
+    }
+
+    /* Empty state */
+    .chat-empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        flex: 1;
+        padding: var(--space-3xl) var(--space-xl);
+        color: var(--text-tertiary);
+    }
+
+    .chat-empty-icon {
+        font-size: 2.5rem;
+        margin-bottom: var(--space-lg);
+        opacity: 0.5;
+    }
+
+    .chat-empty-state h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: var(--space-sm);
+    }
+
+    .chat-empty-state p {
+        font-size: 0.85rem;
+        line-height: 1.6;
+        max-width: 300px;
+    }
+
+    /* Message Bubbles */
+    .chat-message {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+        animation: slideInUp 0.3s ease both;
+    }
+
+    @keyframes slideInUp {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .chat-message.user {
+        align-items: flex-end;
+    }
+
+    .chat-message.assistant {
+        align-items: flex-start;
+    }
+
+    .message-sender {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-tertiary);
+        padding: 0 var(--space-sm);
+    }
+
+    .message-bubble {
+        max-width: 85%;
+        padding: var(--space-md) var(--space-lg);
+        border-radius: var(--radius-lg);
+        font-size: 0.875rem;
+        line-height: 1.7;
+    }
+
+    .user .message-bubble {
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.25), rgba(99, 102, 241, 0.15));
+        border: 1px solid rgba(124, 58, 237, 0.2);
+        border-bottom-right-radius: 4px;
+        color: var(--text-primary);
+    }
+
+    .assistant .message-bubble {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-bottom-left-radius: 4px;
+        color: var(--text-secondary);
+        white-space: pre-wrap;
+    }
+
+    .assistant-avatar {
+        width: 28px;
+        height: 28px;
+        background: rgba(124, 58, 237, 0.12);
+        border: 1px solid rgba(124, 58, 237, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+    }
+
+    .message-with-avatar {
+        display: flex;
+        align-items: flex-end;
+        gap: var(--space-sm);
+    }
+
+    /* Input Area */
+    .chat-input-section {
+        padding: var(--space-lg);
+    }
+
+    .chat-form {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-md);
+    }
+
+    .chat-textarea {
+        width: 100%;
+        min-height: 90px;
+        max-height: 200px;
+        resize: vertical;
+        padding: var(--space-md) var(--space-lg);
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        font-size: 0.9rem;
+        line-height: 1.6;
+        transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    .chat-textarea:focus {
+        outline: none;
+        border-color: rgba(124, 58, 237, 0.4);
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.08);
+    }
+
+    .chat-textarea::placeholder {
+        color: var(--text-tertiary);
+    }
+
+    .chat-form-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+    }
+
+    .char-hint {
+        font-size: 0.75rem;
+        color: var(--text-tertiary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="advisor-layout">
+
+        <!-- Sidebar -->
+        <aside>
+            <div class="glass-card no-hover advisor-header reveal">
+                <div class="badge badge-accent mb-md">⬡ AI Advisor</div>
+                <h1>RiskSense Advisor</h1>
+                <p>Conversational layer over the agent pipeline. Ask about risk drivers, recommended actions, and fraud signals.</p>
+                <div class="advisor-status">
+                    <div class="status-dot"></div>
+                    <span style="color: var(--text-secondary);">Advisory Agent Online</span>
+                </div>
+            </div>
+
+            <div class="glass-card no-hover context-card reveal" style="transition-delay: 0.05s;">
+                <div class="context-label">Prediction Context</div>
+                {% if application_json %}
+                <div class="context-linked">
+                    <div class="context-linked-dot"></div>
+                    Context linked
+                </div>
+                <p style="font-size: 0.78rem; color: var(--text-tertiary); margin-top: var(--space-xs); line-height: 1.5;">
+                    Last prediction data is attached — responses are application-specific.
+                </p>
+                {% else %}
+                <div class="context-unlinked">
+                    No prediction linked. <a href="/prediction">Run an analysis</a> first for context-aware answers.
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="glass-card no-hover suggestions-sidebar reveal" style="transition-delay: 0.1s;">
+                <div class="context-label">Quick Questions</div>
+                <button type="button" class="suggestion-chip">Explain the risk drivers</button>
+                <button type="button" class="suggestion-chip">What actions should we take?</button>
+                <button type="button" class="suggestion-chip">How does the fraud scoring work?</button>
+                <button type="button" class="suggestion-chip">What is the CIBIL threshold?</button>
+                <button type="button" class="suggestion-chip">Explain the agent workflow</button>
+            </div>
+        </aside>
+
+        <!-- Chat Interface -->
+        <div class="chat-interface reveal" style="transition-delay: 0.15s;">
+            <!-- Chat Window -->
+            <div class="glass-card no-hover" style="padding: 0; overflow: hidden;">
+                <div class="chat-window" id="chatWindow">
+                    <!-- Chat history will be loaded by advisor.js -->
+                    <div class="chat-empty-state">
+                        <div class="chat-empty-icon">⬡</div>
+                        <h3>RiskSense Advisor Ready</h3>
+                        <p>Ask about fraud risk signals, recommended banking actions, or how the agent pipeline works.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Section -->
+            <div class="glass-card no-hover chat-input-section">
+                <form class="chat-form" id="advisorForm">
+                    {% if application_json %}
+                    <input type="hidden" id="applicationJsonField" value="{{ application_json | forceescape }}">
+                    {% endif %}
+                    <textarea
+                        id="advisorMessage"
+                        name="message"
+                        class="chat-textarea"
+                        placeholder="Ask about risk drivers, recommended actions, fraud signals, or agent workflow..."
+                        aria-label="Your question for the advisor"
+                        required
+                    ></textarea>
+                    <div class="chat-form-footer">
+                        <span class="char-hint">Press Enter + Shift for new line</span>
+                        <button type="submit" class="btn btn-primary" id="sendBtn">
+                            ↑ Send Message
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/advisor.js') }}"></script>
+{% endblock %}

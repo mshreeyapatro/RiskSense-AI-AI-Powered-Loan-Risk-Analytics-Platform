@@ -1,521 +1,467 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About Project - Loan Fraud Detection</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #1a4f72;
-            --secondary-color: #2c7da0;
-            --accent-color: #468faf;
-            --light-color: #89c2d9;
-            --success-color: #52b788;
-            --warning-color: #f4a261;
-            --danger-color: #e63946;
-            --light-bg: #f8f9fa;
-            --dark-text: #212529;
-            --light-text: #6c757d;
-            --white: #ffffff;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --shadow-hover: 0 10px 15px rgba(0, 0, 0, 0.1);
-        }
+{% extends "base.html" %}
+{% block title %}RiskSense AI — About{% endblock %}
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+{% block head %}
+<style>
+    /* ---- Hero ---- */
+    .about-hero {
+        text-align: center;
+        padding: var(--space-4xl) 0 var(--space-3xl);
+    }
 
-        body {
-            background-color: var(--light-bg);
-            color: var(--dark-text);
-            line-height: 1.6;
-        }
+    .about-hero h1 {
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        font-weight: 900;
+        letter-spacing: -0.04em;
+        margin-bottom: var(--space-md);
+    }
 
-        .container {
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
+    .about-hero p {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+        max-width: 620px;
+        margin: 0 auto;
+        line-height: 1.75;
+    }
 
-        /* Header Styles */
-        header {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: var(--white);
-            padding: 1rem 0;
-            box-shadow: var(--shadow);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+    /* ---- Overview ---- */
+    .overview-section {
+        padding: var(--space-3xl) 0;
+    }
 
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    .overview-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-xl);
+        align-items: start;
+    }
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
+    @media (max-width: 768px) {
+        .overview-grid { grid-template-columns: 1fr; }
+    }
 
-        .logo i {
-            font-size: 2rem;
-        }
+    .overview-text h2 {
+        font-size: 1.6rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        margin-bottom: var(--space-lg);
+    }
 
-        nav ul {
-            display: flex;
-            list-style: none;
-            gap: 2rem;
-        }
+    .overview-text p {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        line-height: 1.75;
+        margin-bottom: var(--space-lg);
+    }
 
-        nav a {
-            color: var(--white);
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-        }
+    .overview-highlights {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-sm);
+    }
 
-        nav a:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
+    .highlight-row {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+    }
 
-        nav a.active {
-            background-color: rgba(255, 255, 255, 0.2);
-        }
+    .highlight-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent-tertiary);
+        flex-shrink: 0;
+    }
 
-        /* Main Content */
-        main {
-            padding: 2rem 0 4rem;
-        }
+    /* ---- Project Timeline ---- */
+    .timeline-section {
+        padding: var(--space-4xl) 0;
+    }
 
-        .page-title {
-            text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            color: var(--primary-color);
-        }
+    .timeline {
+        max-width: 700px;
+        margin: 0 auto;
+        position: relative;
+        padding-left: var(--space-3xl);
+    }
 
-        .page-subtitle {
-            text-align: center;
-            color: var(--light-text);
-            margin-bottom: 3rem;
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-        }
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 16px;
+        top: 0; bottom: 0;
+        width: 2px;
+        background: linear-gradient(to bottom, var(--accent-tertiary), var(--glass-border));
+    }
 
-        /* About Section */
-        .about-section {
-            background-color: var(--white);
-            border-radius: 12px;
-            box-shadow: var(--shadow);
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
+    .timeline-item {
+        position: relative;
+        margin-bottom: var(--space-2xl);
+        animation: fadeIn 0.3s ease both;
+    }
 
-        .section-title {
-            font-size: 1.8rem;
-            color: var(--primary-color);
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid var(--light-color);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
+    .timeline-dot {
+        position: absolute;
+        left: calc(-1 * var(--space-3xl) + 8px);
+        top: 4px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--glass-bg);
+        border: 2px solid var(--accent-tertiary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.55rem;
+        font-weight: 700;
+        color: var(--accent-tertiary);
+    }
 
-        .section-content {
-            color: var(--light-text);
-            font-size: 1.1rem;
-            margin-bottom: 1.5rem;
-        }
+    .timeline-item h3 {
+        font-size: 1rem;
+        font-weight: 700;
+        margin-bottom: var(--space-xs);
+        letter-spacing: -0.01em;
+    }
 
-        /* Technologies Grid */
-        .tech-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-top: 2rem;
-        }
+    .timeline-phase {
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--accent-tertiary);
+        margin-bottom: var(--space-sm);
+    }
 
-        .tech-card {
-            background-color: var(--light-bg);
-            border-radius: 8px;
-            padding: 1.5rem;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
+    .timeline-item p {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        line-height: 1.65;
+    }
 
-        .tech-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-hover);
-        }
+    /* ---- Tech Stack ---- */
+    .tech-section {
+        padding: var(--space-4xl) 0;
+    }
 
-        .tech-icon {
-            font-size: 2.5rem;
-            color: var(--accent-color);
-            margin-bottom: 1rem;
-        }
+    .tech-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--space-lg);
+        margin-top: var(--space-2xl);
+    }
 
-        .tech-name {
-            font-weight: 600;
-            color: var(--primary-color);
-        }
+    @media (max-width: 900px) {
+        .tech-grid { grid-template-columns: repeat(2, 1fr); }
+    }
 
-        /* Team Section */
-        .team-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
-            margin-top: 2rem;
-        }
+    @media (max-width: 480px) {
+        .tech-grid { grid-template-columns: 1fr; }
+    }
 
-        .team-member {
-            background-color: var(--white);
-            border-radius: 8px;
-            box-shadow: var(--shadow);
-            padding: 1.5rem;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
+    .tech-card {
+        padding: var(--space-xl);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
 
-        .team-member:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-hover);
-        }
+    .tech-card::before {
+        content: '';
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, var(--accent-tertiary), transparent);
+        opacity: 0;
+        transition: opacity var(--transition-base);
+    }
 
-        .member-avatar {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background-color: var(--light-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1rem;
-            font-size: 2.5rem;
-            color: var(--primary-color);
-        }
+    .tech-card:hover::before {
+        opacity: 0.5;
+    }
 
-        .member-name {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
-        }
+    .tech-emoji {
+        font-size: 2.2rem;
+        margin-bottom: var(--space-md);
+        display: block;
+    }
 
-        .member-role {
-            color: var(--light-text);
-            margin-bottom: 1rem;
-        }
+    .tech-card h4 {
+        font-size: 0.95rem;
+        font-weight: 700;
+        margin-bottom: var(--space-xs);
+    }
 
-        /* Timeline */
-        .timeline {
-            position: relative;
-            margin: 2rem 0;
-        }
+    .tech-card p {
+        font-size: 0.78rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
 
-        .timeline::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 2px;
-            height: 100%;
-            background-color: var(--light-color);
-        }
+    .tech-version {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        color: var(--text-tertiary);
+        margin-top: var(--space-xs);
+        padding: 2px 6px;
+        background: var(--glass-bg);
+        border-radius: 4px;
+        border: 1px solid var(--glass-border);
+    }
 
-        .timeline-item {
-            position: relative;
-            margin-bottom: 2rem;
-            width: 50%;
-        }
+    /* ---- Metrics ---- */
+    .metrics-section {
+        padding: var(--space-3xl) 0;
+    }
 
-        .timeline-item:nth-child(odd) {
-            left: 0;
-            padding-right: 2rem;
-            text-align: right;
-        }
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--space-lg);
+    }
 
-        .timeline-item:nth-child(even) {
-            left: 50%;
-            padding-left: 2rem;
-        }
+    @media (max-width: 768px) {
+        .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+    }
 
-        .timeline-content {
-            background-color: var(--white);
-            border-radius: 8px;
-            box-shadow: var(--shadow);
-            padding: 1.5rem;
-        }
+    @media (max-width: 480px) {
+        .metrics-grid { grid-template-columns: 1fr; }
+    }
 
-        .timeline-date {
-            font-weight: 600;
-            color: var(--accent-color);
-            margin-bottom: 0.5rem;
-        }
+    .metric-card {
+        padding: var(--space-xl);
+        text-align: center;
+    }
 
-        .timeline-title {
-            font-size: 1.2rem;
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
-        }
+    .metric-card .stat-number {
+        font-size: 2rem;
+    }
 
-        .timeline-description {
-            color: var(--light-text);
-        }
+    /* ---- CTA ---- */
+    .about-cta {
+        padding: var(--space-4xl) 0;
+        text-align: center;
+    }
 
-        .timeline-dot {
-            position: absolute;
-            top: 1.5rem;
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background-color: var(--accent-color);
-            border: 3px solid var(--white);
-            box-shadow: 0 0 0 3px var(--light-bg);
-        }
+    .about-cta-card {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: var(--space-3xl);
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.06), rgba(6, 182, 212, 0.03));
+        border: 1px solid rgba(124, 58, 237, 0.12);
+    }
 
-        .timeline-item:nth-child(odd) .timeline-dot {
-            right: -8px;
-        }
+    .about-cta-card h2 {
+        font-size: 1.75rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        margin-bottom: var(--space-md);
+    }
 
-        .timeline-item:nth-child(even) .timeline-dot {
-            left: -8px;
-        }
+    .about-cta-card p {
+        color: var(--text-secondary);
+        margin-bottom: var(--space-xl);
+        font-size: 1rem;
+    }
+</style>
+{% endblock %}
 
-        /* Button */
-        .btn {
-            display: inline-block;
-            padding: 0.8rem 1.5rem;
-            border-radius: 4px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-            margin-top: 1rem;
-        }
+{% block content %}
+<div class="container">
 
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: var(--white);
-        }
+    <!-- Hero -->
+    <section class="about-hero">
+        <div class="badge badge-accent mb-lg reveal">⬡ Platform Overview</div>
+        <h1 class="reveal" style="transition-delay: 0.05s;">About RiskSense AI</h1>
+        <p class="reveal" style="transition-delay: 0.1s;">An intelligent multi-agent orchestration layer built atop your preserved ensemble fraud detection model — engineered for fraud operations teams and credit analysts.</p>
+    </section>
 
-        .btn-primary:hover {
-            background-color: var(--secondary-color);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-hover);
-        }
+    <div class="separator"></div>
 
-        /* Footer */
-        footer {
-            background-color: var(--primary-color);
-            color: var(--white);
-            padding: 2rem 0;
-            text-align: center;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                gap: 1rem;
-            }
-
-            nav ul {
-                gap: 1rem;
-            }
-
-            .page-title {
-                font-size: 2rem;
-            }
-
-            .timeline::before {
-                left: 30px;
-            }
-
-            .timeline-item {
-                width: 100%;
-                padding-left: 60px !important;
-                padding-right: 0 !important;
-                text-align: left !important;
-                left: 0 !important;
-            }
-
-            .timeline-dot {
-                left: 22px !important;
-            }
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <div class="container">
-            <div class="header-content">
-                <div class="logo">
-                    <i class="fas fa-shield-alt"></i>
-                    <span>SecureLoan</span>
+    <!-- Platform Overview -->
+    <section class="overview-section">
+        <div class="overview-grid">
+            <div class="overview-text reveal">
+                <h2>What is RiskSense AI?</h2>
+                <p>
+                    RiskSense AI extends a trained loan fraud detection project with a production-grade multi-agent orchestration layer. The original ensemble ML model, preprocessor, notebook training pipeline, and fraud threshold are preserved exactly as trained.
+                </p>
+                <p>
+                    Three specialized agents — Detection, Analytics, and Advisory — collaborate on each incoming loan application to deliver explainable risk analysis and actionable banking guidance, all without touching the core ML artifacts.
+                </p>
+                <div class="overview-highlights">
+                    <div class="highlight-row"><div class="highlight-dot"></div> Zero mutation of trained model weights</div>
+                    <div class="highlight-row"><div class="highlight-dot"></div> Structured dataclass-based agent contracts</div>
+                    <div class="highlight-row"><div class="highlight-dot"></div> REST API for headless integration</div>
+                    <div class="highlight-row"><div class="highlight-dot"></div> Context-aware conversational advisor</div>
+                    <div class="highlight-row"><div class="highlight-dot"></div> Designed for production deployment</div>
                 </div>
-                <nav>
-                    <ul>
-                        <li><a href="/">Home</a></li>
-                        <li><a href="/prediction">Prediction</a></li>
-                        <li><a href="/about" class="active">About</a></li>
-                    </ul>
-                </nav>
+            </div>
+            <div class="glass-card no-hover reveal" style="padding: var(--space-xl); transition-delay: 0.1s;">
+                <div class="overline mb-lg">⬡ System Components</div>
+                <div style="display: flex; flex-direction: column; gap: var(--space-sm);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-sm) 0; border-bottom: 1px solid var(--glass-border); font-size: 0.875rem;">
+                        <span style="color: var(--text-secondary);">Framework</span>
+                        <span class="font-mono" style="font-size: 0.8rem;">Python / Flask 3.0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-sm) 0; border-bottom: 1px solid var(--glass-border); font-size: 0.875rem;">
+                        <span style="color: var(--text-secondary);">ML Library</span>
+                        <span class="font-mono" style="font-size: 0.8rem;">scikit-learn</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-sm) 0; border-bottom: 1px solid var(--glass-border); font-size: 0.875rem;">
+                        <span style="color: var(--text-secondary);">Model Type</span>
+                        <span class="font-mono" style="font-size: 0.8rem;">Ensemble (pkl)</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-sm) 0; border-bottom: 1px solid var(--glass-border); font-size: 0.875rem;">
+                        <span style="color: var(--text-secondary);">Balancing</span>
+                        <span class="font-mono" style="font-size: 0.8rem;">SMOTE</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-sm) 0; border-bottom: 1px solid var(--glass-border); font-size: 0.875rem;">
+                        <span style="color: var(--text-secondary);">Fraud Threshold</span>
+                        <span class="font-mono" style="font-size: 0.8rem;">40%</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-sm) 0; border-bottom: 1px solid var(--glass-border); font-size: 0.875rem;">
+                        <span style="color: var(--text-secondary);">Templates</span>
+                        <span class="font-mono" style="font-size: 0.8rem;">Jinja2</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-sm) 0; font-size: 0.875rem;">
+                        <span style="color: var(--text-secondary);">Deployment</span>
+                        <span class="font-mono" style="font-size: 0.8rem;">Docker / Gunicorn</span>
+                    </div>
+                </div>
             </div>
         </div>
-    </header>
+    </section>
 
-    <main>
-        <div class="container">
-            <h1 class="page-title">📌 About Loan Fraud Detection</h1>
-            <p class="page-subtitle">Learn about our advanced system that helps financial institutions detect and prevent loan fraud</p>
+    <div class="separator"></div>
 
-            <section class="about-section">
-                <h2 class="section-title">
-                    <i class="fas fa-info-circle"></i>
-                    Project Overview
-                </h2>
-                <p class="section-content">
-                    Loan fraud is a serious issue in the banking sector, causing billions of dollars in losses annually. 
-                    This project uses historical loan data and machine learning to classify applications as fraudulent or genuine, 
-                    helping financial institutions make informed decisions and protect their assets.
-                </p>
-                <p class="section-content">
-                    Our system analyzes multiple factors including applicant information, loan details, credit history, and 
-                    other relevant data points to identify patterns that indicate potential fraud. By leveraging advanced 
-                    machine learning algorithms, we can detect suspicious applications with high accuracy.
-                </p>
-            </section>
+    <!-- Technology Stack -->
+    <section class="tech-section">
+        <div class="section-header reveal">
+            <div class="overline">⬡ Technology Stack</div>
+            <h2>Built With</h2>
+            <p>Production-grade technologies chosen for reliability, explainability, and minimal inference latency.</p>
+        </div>
 
-            <section class="about-section">
-                <h2 class="section-title">
-                    <i class="fas fa-cogs"></i>
-                    Technologies Used
-                </h2>
-                <div class="tech-grid">
-                    <div class="tech-card">
-                        <div class="tech-icon">
-                            <i class="fab fa-python"></i>
-                        </div>
-                        <div class="tech-name">Python</div>
-                    </div>
-                    <div class="tech-card">
-                        <div class="tech-icon">
-                            <i class="fas fa-flask"></i>
-                        </div>
-                        <div class="tech-name">Flask</div>
-                    </div>
-                    <div class="tech-card">
-                        <div class="tech-icon">
-                            <i class="fas fa-brain"></i>
-                        </div>
-                        <div class="tech-name">Scikit-learn</div>
-                    </div>
-                    <div class="tech-card">
-                        <div class="tech-icon">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <div class="tech-name">SMOTE</div>
-                    </div>
-                    <div class="tech-card">
-                        <div class="tech-icon">
-                            <i class="fas fa-project-diagram"></i>
-                        </div>
-                        <div class="tech-name">Ensemble Learning</div>
-                    </div>
-                    <div class="tech-card">
-                        <div class="tech-icon">
-                            <i class="fas fa-database"></i>
-                        </div>
-                        <div class="tech-name">Pandas</div>
-                    </div>
-                </div>
-            </section>
-
-            <section class="about-section">
-                <h2 class="section-title">
-                    <i class="fas fa-history"></i>
-                    Project Timeline
-                </h2>
-                <div class="timeline">
-                    <div class="timeline-item">
-                        <div class="timeline-content">
-                            <div class="timeline-date">Phase 1</div>
-                            <div class="timeline-title">Data Collection & Analysis</div>
-                            <div class="timeline-description">Gathered historical loan data and performed exploratory data analysis to identify key features.</div>
-                        </div>
-                        <div class="timeline-dot"></div>
-                    </div>
-                    <div class="timeline-item">
-                        <div class="timeline-content">
-                            <div class="timeline-date">Phase 2</div>
-                            <div class="timeline-title">Data Preprocessing</div>
-                            <div class="timeline-description">Applied SMOTE to handle class imbalance and used one-hot encoding and scaling for feature engineering.</div>
-                        </div>
-                        <div class="timeline-dot"></div>
-                    </div>
-                    <div class="timeline-item">
-                        <div class="timeline-content">
-                            <div class="timeline-date">Phase 3</div>
-                            <div class="timeline-title">Model Development</div>
-                            <div class="timeline-description">Built and trained Random Forest, Gradient Boosting, and KNN models.</div>
-                        </div>
-                        <div class="timeline-dot"></div>
-                    </div>
-                    <div class="timeline-item">
-                        <div class="timeline-content">
-                            <div class="timeline-date">Phase 4</div>
-                            <div class="timeline-title">Model Evaluation & Deployment</div>
-                            <div class="timeline-description">Evaluated model performance and created a Flask web application for real-time predictions.</div>
-                        </div>
-                        <div class="timeline-dot"></div>
-                    </div>
-                </div>
-            </section>
-
-            <section class="about-section">
-                <h2 class="section-title">
-                    <i class="fas fa-chart-bar"></i>
-                    Model Performance
-                </h2>
-                <p class="section-content">
-                    Our ensemble model achieves an accuracy of 95% in detecting fraudulent loan applications. 
-                    The model combines the strengths of Random Forest, Gradient Boosting, and KNN algorithms to 
-                    provide reliable predictions with minimal false positives.
-                </p>
-                <p class="section-content">
-                    The system processes applications in under a second, making it suitable for real-time use in 
-                    banking environments where quick decisions are crucial.
-                </p>
-            </section>
-
-            <div style="text-align: center; margin-top: 2rem;">
-                <a href="/" class="btn btn-primary">
-                    <i class="fas fa-home"></i> Back to Home
-                </a>
+        <div class="tech-grid stagger-children">
+            <div class="glass-card tech-card" data-tilt>
+                <span class="tech-emoji">🐍</span>
+                <h4>Python</h4>
+                <p>Core language powering both the Flask backend and ML inference pipeline.</p>
+                <span class="tech-version">3.10+</span>
+            </div>
+            <div class="glass-card tech-card" data-tilt>
+                <span class="tech-emoji">⚗️</span>
+                <h4>Flask</h4>
+                <p>Lightweight WSGI framework for routing, template rendering, and REST API exposure.</p>
+                <span class="tech-version">3.0</span>
+            </div>
+            <div class="glass-card tech-card" data-tilt>
+                <span class="tech-emoji">🤖</span>
+                <h4>scikit-learn</h4>
+                <p>Pre-trained ensemble model and preprocessing pipeline via pickle artifacts.</p>
+                <span class="tech-version">1.x</span>
+            </div>
+            <div class="glass-card tech-card" data-tilt>
+                <span class="tech-emoji">⚖️</span>
+                <h4>SMOTE</h4>
+                <p>Synthetic Minority Oversampling for class-balanced fraud detection training.</p>
+                <span class="tech-version">imbalanced-learn</span>
+            </div>
+            <div class="glass-card tech-card" data-tilt>
+                <span class="tech-emoji">📊</span>
+                <h4>Chart.js</h4>
+                <p>Client-side risk gauge and donut chart rendering for the prediction report.</p>
+                <span class="tech-version">4.4</span>
+            </div>
+            <div class="glass-card tech-card" data-tilt>
+                <span class="tech-emoji">🐳</span>
+                <h4>Docker</h4>
+                <p>Containerized deployment support via included Dockerfile for production replicas.</p>
+                <span class="tech-version">Dockerfile</span>
             </div>
         </div>
-    </main>
+    </section>
 
-    <footer>
-        <div class="container">
-            <p>&copy; 2026 SecureLoan Fraud Detection System. All rights reserved.</p>
+    <div class="separator"></div>
+
+    <!-- Project Timeline -->
+    <section class="timeline-section">
+        <div class="section-header reveal">
+            <div class="overline">⬡ Project Journey</div>
+            <h2>Development Phases</h2>
+            <p>From raw data to production-grade agentic platform.</p>
         </div>
-    </footer>
-</body>
-</html>
+
+        <div class="timeline stagger-children">
+            <div class="timeline-item glass-card no-hover" style="padding: var(--space-lg);">
+                <div class="timeline-dot">1</div>
+                <div class="timeline-phase">Phase 1–3</div>
+                <h3>Data Engineering &amp; Model Training</h3>
+                <p>EDA, data cleaning, SMOTE-based class balancing, and ensemble model training. Artifacts preserved in <code>bankloanfraud.ipynb</code> — untouched throughout all subsequent phases.</p>
+            </div>
+            <div class="timeline-item glass-card no-hover" style="padding: var(--space-lg);">
+                <div class="timeline-dot">2</div>
+                <div class="timeline-phase">Phase 4</div>
+                <h3>Flask Deployment</h3>
+                <p>Model artifacts serialized to <code>.pkl</code> files. Flask app scaffolded with Jinja2 templates for serving predictions via web interface and <code>/api/analyze</code> REST endpoint.</p>
+            </div>
+            <div class="timeline-item glass-card no-hover" style="padding: var(--space-lg);">
+                <div class="timeline-dot">3</div>
+                <div class="timeline-phase">Phase 5</div>
+                <h3>Agentic Architecture</h3>
+                <p>Multi-agent orchestration layer added: <code>RiskSenseOrchestrator</code> coordinates <code>DetectionAgent</code>, <code>AnalyticsAgent</code>, and <code>AdvisoryAgent</code> with structured dataclass contracts and audit trail.</p>
+            </div>
+            <div class="timeline-item glass-card no-hover" style="padding: var(--space-lg);">
+                <div class="timeline-dot">4</div>
+                <div class="timeline-phase">Phase 6</div>
+                <h3>Premium UI/UX Redesign</h3>
+                <p>Complete frontend transformation using glassmorphism design system, animated interactions, multi-step form wizard, Chart.js risk visualization, and responsive mobile layout.</p>
+            </div>
+        </div>
+    </section>
+
+    <div class="separator"></div>
+
+    <!-- Metrics -->
+    <section class="metrics-section">
+        <div class="metrics-grid stagger-children">
+            <div class="glass-card metric-card">
+                <div class="stat-number" data-count="3">0</div>
+                <div class="stat-label">AI Agents</div>
+            </div>
+            <div class="glass-card metric-card">
+                <div class="stat-number font-mono" data-count="14">0</div>
+                <div class="stat-label">Input Features</div>
+            </div>
+            <div class="glass-card metric-card">
+                <div class="stat-number font-mono" data-count="40" data-suffix="%">0</div>
+                <div class="stat-label">Fraud Threshold</div>
+            </div>
+            <div class="glass-card metric-card">
+                <div class="stat-number font-mono">REST</div>
+                <div class="stat-label">API Access</div>
+            </div>
+        </div>
+    </section>
+
+    <div class="separator"></div>
+
+    <!-- CTA -->
+    <section class="about-cta">
+        <div class="glass-card about-cta-card no-hover reveal">
+            <h2>Experience the Platform</h2>
+            <p>Submit a loan application and watch three AI agents deliver comprehensive, explainable fraud analysis in real time.</p>
+            <div class="flex gap-md justify-center flex-wrap">
+                <a href="/prediction" class="btn btn-primary btn-lg">Run Analysis →</a>
+                <a href="/agents" class="btn btn-outline btn-lg">View Architecture</a>
+            </div>
+        </div>
+    </section>
+
+</div>
+{% endblock %}

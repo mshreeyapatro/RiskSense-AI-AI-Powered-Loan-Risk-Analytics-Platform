@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="RiskSense AI — Agentic Banking Fraud Analytics and Advisory Platform. Multi-agent ML-powered loan fraud detection with explainable risk analysis.">
+    <meta name="theme-color" content="#06080f">
+    <title>{% block title %}RiskSense AI{% endblock %}</title>
+
+    <!-- Design System -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/design-system.css') }}">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" defer></script>
+
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <!-- Accessibility: Skip Link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- Animated Background -->
+    <div class="bg-mesh" aria-hidden="true"></div>
+    <div class="bg-noise" aria-hidden="true"></div>
+
+    <!-- Scroll Progress -->
+    <div class="scroll-progress" aria-hidden="true"></div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" role="alert" aria-live="assertive">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Running Agentic Pipeline...</div>
+        <div class="loading-steps"></div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" aria-live="polite"></div>
+
+    <!-- Global: History Drawer -->
+    <div class="history-overlay" id="historyOverlay" aria-hidden="true"></div>
+    <aside class="history-drawer" id="historyDrawer" role="complementary" aria-label="Analysis History">
+        <div class="history-drawer-header">
+            <h3>📊 Analysis History</h3>
+            <button class="history-drawer-close" id="historyCloseBtn" aria-label="Close history drawer">✕</button>
+        </div>
+        <div class="history-drawer-list" id="historyList"></div>
+        <div class="history-drawer-footer">
+            <button class="btn btn-outline btn-sm" style="width:100%;" onclick="if(typeof HistoryDrawer!=='undefined') HistoryDrawer.clear();">🗑 Clear History</button>
+        </div>
+    </aside>
+
+    <!-- Global: Keyboard Shortcuts Modal -->
+    <div class="shortcuts-modal" id="shortcutsModal" role="dialog" aria-modal="true" aria-label="Keyboard Shortcuts">
+        <div class="shortcuts-modal-inner">
+            <div class="shortcuts-modal-header">
+                <h3>⌨ Keyboard Shortcuts</h3>
+                <button class="history-drawer-close" onclick="document.getElementById('shortcutsModal').classList.remove('open');document.body.style.overflow='';" aria-label="Close shortcuts">✕</button>
+            </div>
+            <div class="shortcut-row">
+                <span class="shortcut-desc">Open keyboard shortcuts</span>
+                <div class="shortcut-keys"><span class="kbd">?</span></div>
+            </div>
+            <div class="shortcut-row">
+                <span class="shortcut-desc">Go to AI Advisor</span>
+                <div class="shortcut-keys"><span class="kbd">Ctrl</span><span class="kbd">/</span></div>
+            </div>
+            <div class="shortcut-row">
+                <span class="shortcut-desc">Send advisor message</span>
+                <div class="shortcut-keys"><span class="kbd">Ctrl</span><span class="kbd">Enter</span></div>
+            </div>
+            <div class="shortcut-row">
+                <span class="shortcut-desc">Random fill (prediction form)</span>
+                <div class="shortcut-keys"><span class="kbd">Ctrl</span><span class="kbd">Shift</span><span class="kbd">R</span></div>
+            </div>
+            <div class="shortcut-row">
+                <span class="shortcut-desc">Close any modal / drawer</span>
+                <div class="shortcut-keys"><span class="kbd">Esc</span></div>
+            </div>
+            <div class="shortcut-row">
+                <span class="shortcut-desc">Toggle Dark/Light mode</span>
+                <div class="shortcut-keys"><span class="kbd">Ctrl</span><span class="kbd">Shift</span><span class="kbd">D</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Panel -->
+    <div class="notification-panel" id="notificationPanel" aria-hidden="true">
+        <div class="notification-panel-header">
+            <span>🔔 Fraud Alerts</span>
+            <button onclick="AlertSystem.clearAll()" style="font-size:0.75rem;color:var(--text-tertiary);background:none;border:none;cursor:pointer;">Clear All</button>
+        </div>
+        <div class="notification-list" id="notificationList">
+            <div class="no-alerts-msg" style="text-align:center;padding:2rem;color:var(--text-tertiary);font-size:0.82rem;">No alerts yet. Monitoring active.</div>
+        </div>
+    </div>
+    <div class="notification-overlay" id="notificationOverlay"></div>
+
+    <!-- Floating History FAB -->
+    <button class="history-fab" id="historyDrawerBtn" title="View analysis history" aria-label="Open analysis history">
+        📋 History
+    </button>
+
+    <!-- Page Wrapper -->
+    <div class="page-wrapper">
+
+        <!-- Navbar -->
+        <nav class="navbar" role="navigation" aria-label="Main navigation">
+            <div class="container navbar-inner">
+                <a href="/" class="navbar-brand" aria-label="RiskSense AI Home">
+                    <div class="brand-icon" aria-hidden="true">⬡</div>
+                    <div>
+                        RiskSense AI
+                        <span class="brand-sub">Agentic Fraud Analytics</span>
+                    </div>
+                </a>
+
+                <button class="menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
+                    <span class="hamburger-line"></span>
+                    <span class="hamburger-line"></span>
+                    <span class="hamburger-line"></span>
+                </button>
+
+                <ul class="navbar-nav" role="menubar">
+                    <li role="none"><a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}" role="menuitem">Home</a></li>
+                    <li role="none"><a href="/prediction" class="nav-link {% if request.path == '/prediction' %}active{% endif %}" role="menuitem">Analysis</a></li>
+                    <li role="none"><a href="/batch" class="nav-link {% if request.path == '/batch' %}active{% endif %}" role="menuitem">Batch</a></li>
+                    <li role="none"><a href="/compare" class="nav-link {% if request.path == '/compare' %}active{% endif %}" role="menuitem">Compare</a></li>
+                    <li role="none"><a href="/dashboard" class="nav-link {% if request.path == '/dashboard' %}active{% endif %}" role="menuitem">Dashboard</a></li>
+                    <li role="none"><a href="/advisor" class="nav-link {% if request.path == '/advisor' %}active{% endif %}" role="menuitem">Advisor</a></li>
+                    <li role="none"><a href="/api/docs" class="nav-link {% if request.path == '/api/docs' %}active{% endif %}" role="menuitem">API</a></li>
+                    <li role="none"><a href="/about" class="nav-link {% if request.path == '/about' %}active{% endif %}" role="menuitem">About</a></li>
+                </ul>
+
+                <!-- Navbar Actions -->
+                <div class="navbar-actions">
+                    <!-- Notification Bell -->
+                    <button class="navbar-icon-btn" id="notificationBellBtn" title="Fraud Alerts" aria-label="Open fraud alerts">
+                        🔔
+                        <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+                    </button>
+
+                    <!-- Theme Toggle -->
+                    <button class="navbar-icon-btn theme-toggle" id="themeToggleBtn" title="Toggle Dark/Light mode" aria-label="Toggle theme">
+                        🌙
+                    </button>
+
+                    <!-- Role Badge -->
+                    <div class="role-badge" id="roleDisplay" onclick="window.location.href='/login'" title="Click to change role" style="cursor:pointer;"></div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main id="main-content">
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer" role="contentinfo">
+            <div class="container footer-inner">
+                <div class="footer-grid">
+                    <div class="footer-brand">
+                        <a href="/" class="navbar-brand" style="margin-bottom: 0.5rem;">
+                            <div class="brand-icon" aria-hidden="true">⬡</div>
+                            <div>
+                                RiskSense AI
+                                <span class="brand-sub">Agentic Fraud Analytics</span>
+                            </div>
+                        </a>
+                        <p>Multi-agent orchestration layer for banking fraud detection. Powered by ensemble ML with explainable risk analysis.</p>
+                        <div style="margin-top: var(--space-md);">
+                            <button onclick="document.getElementById('shortcutsModal').classList.add('open');document.body.style.overflow='hidden';"
+                                style="font-size:0.72rem; color:var(--text-tertiary); background:none; border:none; cursor:pointer; padding:0; text-decoration:underline;">
+                                ⌨ Keyboard shortcuts
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="footer-heading">Platform</div>
+                        <div class="footer-links">
+                            <a href="/prediction">Fraud Analysis</a>
+                            <a href="/batch">Batch Screening</a>
+                            <a href="/compare">Compare Tool</a>
+                            <a href="/advisor">AI Advisor</a>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="footer-heading">Resources</div>
+                        <div class="footer-links">
+                            <a href="/about">About</a>
+                            <a href="/api/docs">API Docs</a>
+                            <a href="/agents">Architecture</a>
+                            <a href="#" onclick="document.getElementById('shortcutsModal').classList.add('open');document.body.style.overflow='hidden';return false;">Shortcuts</a>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="footer-heading">Technology</div>
+                        <div class="footer-links">
+                            <a href="#">Python / Flask</a>
+                            <a href="#">scikit-learn</a>
+                            <a href="#">Ensemble ML</a>
+                            <a href="#">SMOTE</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <span>&copy; 2026 RiskSense AI — Agentic Banking Fraud Analytics Platform</span>
+                    <span>Press <kbd style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:3px;padding:1px 5px;font-size:0.7rem;">?</kbd> for shortcuts</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- CDN Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+    <!-- Core JS -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

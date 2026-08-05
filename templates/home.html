@@ -1,495 +1,530 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loan Fraud Detection - SecureLoan</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #1a4f72;
-            --secondary-color: #2c7da0;
-            --accent-color: #468faf;
-            --light-color: #89c2d9;
-            --success-color: #52b788;
-            --warning-color: #f4a261;
-            --danger-color: #e63946;
-            --light-bg: #f8f9fa;
-            --dark-text: #212529;
-            --light-text: #6c757d;
-            --white: #ffffff;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --shadow-hover: 0 10px 15px rgba(0, 0, 0, 0.1);
-        }
+{% extends "base.html" %}
+{% block title %}RiskSense AI — Agentic Banking Fraud Analytics{% endblock %}
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+{% block head %}
+<style>
+    /* ---- Hero ---- */
+    .hero {
+        position: relative;
+        padding: var(--space-4xl) 0;
+        text-align: center;
+        overflow: hidden;
+        min-height: 85vh;
+        display: flex;
+        align-items: center;
+    }
 
-        body {
-            background-color: var(--light-bg);
-            color: var(--dark-text);
-            line-height: 1.6;
-        }
+    .hero-bg {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        z-index: 0;
+    }
 
-        .container {
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
+    .hero .floating-orb:nth-child(1) {
+        width: 500px; height: 500px;
+        top: -10%; left: -10%;
+        animation-duration: 12s;
+    }
 
-        /* Header Styles */
-        header {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: var(--white);
-            padding: 1rem 0;
-            box-shadow: var(--shadow);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+    .hero .floating-orb:nth-child(2) {
+        width: 400px; height: 400px;
+        top: 20%; right: -10%;
+        animation-duration: 10s;
+        animation-delay: 2s;
+    }
 
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    .hero .floating-orb:nth-child(3) {
+        width: 300px; height: 300px;
+        bottom: -5%; left: 30%;
+        animation-duration: 14s;
+        animation-delay: 4s;
+    }
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
+    .hero-content {
+        position: relative;
+        z-index: 1;
+        max-width: 800px;
+        margin: 0 auto;
+    }
 
-        .logo i {
-            font-size: 2rem;
-        }
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-sm);
+        padding: 0.35rem 1rem;
+        background: rgba(124, 58, 237, 0.1);
+        border: 1px solid rgba(124, 58, 237, 0.2);
+        border-radius: var(--radius-full);
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--accent-tertiary);
+        margin-bottom: var(--space-xl);
+        letter-spacing: 0.03em;
+    }
 
-        nav ul {
-            display: flex;
-            list-style: none;
-            gap: 2rem;
-        }
+    .hero-badge .pulse-dot {
+        width: 6px; height: 6px;
+        background: var(--accent-primary);
+        border-radius: 50%;
+        animation: pulse 2s ease-in-out infinite;
+    }
 
-        nav a {
-            color: var(--white);
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-        }
+    .hero-title {
+        font-size: clamp(2.5rem, 6vw, 4.5rem);
+        font-weight: 900;
+        letter-spacing: -0.04em;
+        line-height: 1.05;
+        margin-bottom: var(--space-xl);
+        background: linear-gradient(135deg, #f1f5f9 30%, #94a3b8 70%, #818cf8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        position: relative;
+    }
+    
+    /* Fix for when spans are used inside gradient text */
+    .hero-title .hero-word {
+        background: linear-gradient(135deg, #f1f5f9 30%, #94a3b8 70%, #818cf8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
 
-        nav a:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
+    .hero-desc {
+        font-size: 1.15rem;
+        color: var(--text-secondary);
+        line-height: 1.75;
+        max-width: 620px;
+        margin: 0 auto var(--space-2xl);
+    }
 
-        nav a.active {
-            background-color: rgba(255, 255, 255, 0.2);
-        }
+    .hero-actions {
+        display: flex;
+        gap: var(--space-md);
+        justify-content: center;
+        flex-wrap: wrap;
+    }
 
-        /* Hero Section */
-        .hero {
-            padding: 4rem 0;
-            text-align: center;
-            background: linear-gradient(135deg, rgba(26, 79, 114, 0.05), rgba(44, 125, 160, 0.1));
-        }
+    .hero-actions .btn {
+        padding: 0.85rem 2rem;
+        font-size: 0.95rem;
+    }
 
-        .hero h1 {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            color: var(--primary-color);
-            animation: fadeInDown 0.8s ease;
-        }
+    .hero-stats {
+        display: flex;
+        justify-content: center;
+        gap: var(--space-3xl);
+        margin-top: var(--space-4xl);
+        flex-wrap: wrap;
+    }
 
-        .hero p {
-            font-size: 1.2rem;
-            max-width: 800px;
-            margin: 0 auto 2rem;
-            color: var(--light-text);
-            animation: fadeInUp 0.8s ease;
-        }
+    /* ---- Workflow Section ---- */
+    .workflow-section {
+        padding: var(--space-4xl) 0;
+    }
 
-        .cta-buttons {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            animation: fadeInUp 0.8s ease 0.2s both;
-        }
+    .workflow-flow {
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+        gap: 0;
+        flex-wrap: wrap;
+        position: relative;
+    }
 
-        .btn {
-            display: inline-block;
-            padding: 0.8rem 1.5rem;
-            border-radius: 4px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-        }
+    .workflow-node {
+        flex: 1;
+        min-width: 200px;
+        max-width: 260px;
+        padding: var(--space-xl);
+        background: var(--glass-bg);
+        backdrop-filter: blur(var(--glass-blur));
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-lg);
+        text-align: center;
+        position: relative;
+        transition: all var(--transition-base);
+    }
 
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: var(--white);
-        }
+    .workflow-node:hover {
+        background: var(--glass-bg-hover);
+        border-color: var(--glass-border-hover);
+        transform: translateY(-4px);
+    }
 
-        .btn-primary:hover {
-            background-color: var(--secondary-color);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-hover);
-        }
+    .workflow-node-icon {
+        width: 52px;
+        height: 52px;
+        margin: 0 auto var(--space-md);
+        background: rgba(124, 58, 237, 0.1);
+        border: 1px solid rgba(124, 58, 237, 0.2);
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+    }
 
-        .btn-outline {
-            background-color: transparent;
-            color: var(--primary-color);
-            border: 2px solid var(--primary-color);
-        }
+    .workflow-node h3 {
+        font-size: 0.95rem;
+        font-weight: 700;
+        margin-bottom: var(--space-xs);
+    }
 
-        .btn-outline:hover {
-            background-color: var(--primary-color);
-            color: var(--white);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-hover);
-        }
+    .workflow-node p {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
 
-        /* Features Section */
-        .features {
-            padding: 4rem 0;
-        }
+    .workflow-arrow {
+        display: flex;
+        align-items: center;
+        padding: 0 var(--space-sm);
+        color: var(--text-tertiary);
+        font-size: 1.2rem;
+    }
 
-        .section-title {
-            text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 3rem;
-            color: var(--primary-color);
-            position: relative;
-        }
-
-        .section-title::after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80px;
-            height: 4px;
-            background-color: var(--accent-color);
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-        }
-
-        .feature-card {
-            background-color: var(--white);
-            border-radius: 8px;
-            padding: 2rem;
-            box-shadow: var(--shadow);
-            transition: all 0.3s ease;
-            text-align: center;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-hover);
-        }
-
-        .feature-icon {
-            font-size: 3rem;
-            color: var(--accent-color);
-            margin-bottom: 1rem;
-        }
-
-        .feature-title {
-            font-size: 1.3rem;
-            margin-bottom: 1rem;
-            color: var(--primary-color);
-        }
-
-        .feature-description {
-            color: var(--light-text);
-        }
-
-        /* Stats Section */
-        .stats {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: var(--white);
-            padding: 4rem 0;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 2rem;
-            text-align: center;
-        }
-
-        .stat-item {
-            padding: 1rem;
-        }
-
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-label {
-            font-size: 1rem;
-            opacity: 0.9;
-        }
-
-        /* How It Works Section */
-        .how-it-works {
-            padding: 4rem 0;
-            background-color: var(--white);
-        }
-
-        .steps-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
-            margin-top: 3rem;
-        }
-
-        .step-card {
-            text-align: center;
-            position: relative;
-        }
-
-        .step-number {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background-color: var(--accent-color);
-            color: var(--white);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin: 0 auto 1rem;
-        }
-
-        .step-title {
-            font-size: 1.2rem;
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
-        }
-
-        .step-description {
-            color: var(--light-text);
-        }
-
-        /* Footer */
-        footer {
-            background-color: var(--primary-color);
-            color: var(--white);
-            padding: 2rem 0;
-            text-align: center;
-        }
-
-        .footer-content {
-            display: flex;
+    @media (max-width: 768px) {
+        .workflow-flow {
             flex-direction: column;
-            gap: 1rem;
+            align-items: center;
+            gap: var(--space-md);
         }
-
-        .social-links {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
+        .workflow-arrow {
+            transform: rotate(90deg);
+            padding: 0;
         }
-
-        .social-links a {
-            color: var(--white);
-            font-size: 1.5rem;
-            transition: all 0.3s ease;
+        .workflow-node {
+            max-width: 100%;
+            width: 100%;
         }
+    }
 
-        .social-links a:hover {
-            color: var(--light-color);
-            transform: translateY(-3px);
+    /* ---- Features Section ---- */
+    .features-section {
+        padding: var(--space-4xl) 0;
+    }
+
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--space-lg);
+    }
+
+    @media (max-width: 1024px) {
+        .features-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 640px) {
+        .features-grid { grid-template-columns: 1fr; }
+    }
+
+    .feature-card {
+        padding: var(--space-xl);
+        position: relative;
+        cursor: default;
+    }
+
+    .feature-card .feature-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        margin-bottom: var(--space-lg);
+    }
+
+    .feature-icon.purple { background: rgba(124, 58, 237, 0.12); color: var(--accent-tertiary); }
+    .feature-icon.blue { background: rgba(99, 102, 241, 0.12); color: #818cf8; }
+    .feature-icon.cyan { background: rgba(6, 182, 212, 0.12); color: #06b6d4; }
+    .feature-icon.green { background: rgba(16, 185, 129, 0.12); color: #10b981; }
+    .feature-icon.amber { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+    .feature-icon.rose { background: rgba(244, 63, 94, 0.12); color: #f43f5e; }
+
+    .feature-card h3 {
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin-bottom: var(--space-sm);
+        letter-spacing: -0.01em;
+    }
+
+    .feature-card p {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        line-height: 1.65;
+    }
+
+    /* ---- Stats Banner ---- */
+    .stats-section {
+        padding: var(--space-3xl) 0;
+    }
+
+    .stats-banner {
+        background: var(--glass-bg);
+        backdrop-filter: blur(var(--glass-blur));
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-xl);
+        padding: var(--space-2xl) var(--space-xl);
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--space-xl);
+    }
+
+    .stats-banner::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+    }
+
+    @media (max-width: 768px) {
+        .stats-banner {
+            grid-template-columns: repeat(2, 1fr);
         }
+    }
 
-        /* Animations */
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+    @media (max-width: 480px) {
+        .stats-banner {
+            grid-template-columns: 1fr;
         }
+    }
 
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+    /* ---- CTA Section ---- */
+    .cta-section {
+        padding: var(--space-4xl) 0;
+        text-align: center;
+    }
 
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                gap: 1rem;
-            }
+    .cta-card {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: var(--space-3xl);
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.08), rgba(99, 102, 241, 0.04));
+        border: 1px solid rgba(124, 58, 237, 0.15);
+    }
 
-            nav ul {
-                gap: 1rem;
-            }
+    .cta-card h2 {
+        font-size: 1.75rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        margin-bottom: var(--space-md);
+    }
 
-            .hero h1 {
-                font-size: 2rem;
-            }
+    .cta-card p {
+        color: var(--text-secondary);
+        margin-bottom: var(--space-xl);
+        font-size: 1.05rem;
+    }
+</style>
+{% endblock %}
 
-            .cta-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
+{% block content %}
+<div class="container">
 
-            .btn {
-                width: 200px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <div class="container">
-            <div class="header-content">
-                <div class="logo">
-                    <i class="fas fa-shield-alt"></i>
-                    <span>SecureLoan</span>
-                </div>
-                <nav>
-                    <ul>
-                        <li><a href="/" class="active">Home</a></li>
-                        <li><a href="/prediction">Prediction</a></li>
-                        <li><a href="/about">About</a></li>
-                    </ul>
-                </nav>
-            </div>
+    <!-- Hero Section -->
+    <section class="hero" id="hero">
+        <div class="hero-bg" id="vanta-bg" aria-hidden="true" style="position: absolute; width: 100%; height: 100%; z-index: 0;">
+            <div class="floating-orb orb-purple"></div>
+            <div class="floating-orb orb-blue"></div>
+            <div class="floating-orb orb-cyan"></div>
         </div>
-    </header>
 
-    <section class="hero">
-        <div class="container">
-            <h1>🏦 Loan Fraud Detection System</h1>
-            <p>This system detects fraudulent bank loan applications using ensemble machine learning models with advanced techniques to ensure financial security.</p>
-            <div class="cta-buttons">
-                <a href="/prediction" class="btn btn-primary">Try Prediction</a>
-                <a href="/about" class="btn btn-outline">Learn More</a>
+        <div class="hero-content">
+            <div class="hero-badge reveal">
+                <span class="pulse-dot"></span>
+                Multi-Agent System · Live
+            </div>
+
+            <h1 class="hero-title">Intelligent Fraud Detection for Modern Banking</h1>
+
+            <p class="hero-desc reveal" style="transition-delay: 0.1s;">
+                Your trained ensemble ML model powers the Detection Agent, while Analytics and Advisory agents explain risk and recommend banking actions — all in real time.
+            </p>
+
+            <div class="hero-actions reveal" style="transition-delay: 0.2s;">
+                <a href="/prediction" class="btn btn-primary btn-lg">
+                    Run Agentic Analysis →
+                </a>
+                <a href="/advisor" class="btn btn-outline btn-lg">
+                    AI Advisor Chat
+                </a>
+            </div>
+
+            <div class="hero-stats reveal" style="transition-delay: 0.3s;">
+                <div class="stat-item">
+                    <div class="stat-number" data-count="3">0</div>
+                    <div class="stat-label">Coordinated Agents</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" data-count="95" data-suffix="%+">0</div>
+                    <div class="stat-label">Model Accuracy</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" data-prefix="<" data-count="1" data-suffix="s">0</div>
+                    <div class="stat-label">Pipeline Speed</div>
+                </div>
             </div>
         </div>
     </section>
 
-    <section class="features">
-        <div class="container">
-            <h2 class="section-title">Key Features</h2>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-balance-scale"></i>
-                    </div>
-                    <h3 class="feature-title">SMOTE for Class Imbalance</h3>
-                    <p class="feature-description">Utilizes Synthetic Minority Over-sampling Technique to handle imbalanced datasets, ensuring accurate detection of fraudulent applications.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-code-branch"></i>
-                    </div>
-                    <h3 class="feature-title">Advanced Data Processing</h3>
-                    <p class="feature-description">Implements One-Hot Encoding and Scaling techniques to preprocess data for optimal model performance.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="fas fa-project-diagram"></i>
-                    </div>
-                    <h3 class="feature-title">Ensemble Learning</h3>
-                    <p class="feature-description">Combines Random Forest, Gradient Boosting, and KNN models to achieve higher accuracy and reliability in fraud detection.</p>
-                </div>
+    <div class="separator"></div>
+
+    <!-- Workflow Section -->
+    <section class="workflow-section">
+        <div class="section-header reveal">
+            <div class="overline">⬡ How It Works</div>
+            <h2>Agentic Pipeline Architecture</h2>
+            <p>Each loan application flows through three specialized AI agents that work in coordination to deliver comprehensive fraud analysis.</p>
+        </div>
+
+        <div class="workflow-flow stagger-children">
+            <div class="workflow-node glass-card" data-tilt>
+                <div class="workflow-node-icon">📥</div>
+                <h3>Application</h3>
+                <p>Loan data is ingested and structured for multi-agent processing</p>
+            </div>
+            <div class="workflow-arrow" aria-hidden="true">→</div>
+            <div class="workflow-node glass-card" data-tilt>
+                <div class="workflow-node-icon">🛡️</div>
+                <h3>Detection Agent</h3>
+                <p>Ensemble ML model scores fraud probability (40% threshold)</p>
+            </div>
+            <div class="workflow-arrow" aria-hidden="true">→</div>
+            <div class="workflow-node glass-card" data-tilt>
+                <div class="workflow-node-icon">📊</div>
+                <h3>Analytics Agent</h3>
+                <p>CIBIL, DTI, income, employment risk signals analyzed</p>
+            </div>
+            <div class="workflow-arrow" aria-hidden="true">→</div>
+            <div class="workflow-node glass-card" data-tilt>
+                <div class="workflow-node-icon">⚖️</div>
+                <h3>Advisory Agent</h3>
+                <p>Banking actions: block, manual review, or standard path</p>
             </div>
         </div>
     </section>
 
-    <section class="how-it-works">
-        <div class="container">
-            <h2 class="section-title">How It Works</h2>
-            <div class="steps-grid">
-                <div class="step-card">
-                    <div class="step-number">1</div>
-                    <h3 class="step-title">Data Input</h3>
-                    <p class="step-description">Enter loan application details including applicant information, loan parameters, and credit history.</p>
-                </div>
-                <div class="step-card">
-                    <div class="step-number">2</div>
-                    <h3 class="step-title">Data Processing</h3>
-                    <p class="step-description">System preprocesses the data using advanced techniques like SMOTE and feature scaling.</p>
-                </div>
-                <div class="step-card">
-                    <div class="step-number">3</div>
-                    <h3 class="step-title">ML Prediction</h3>
-                    <p class="step-description">Ensemble models analyze the data and calculate fraud probability with high accuracy.</p>
-                </div>
-                <div class="step-card">
-                    <div class="step-number">4</div>
-                    <h3 class="step-title">Result Display</h3>
-                    <p class="step-description">Get instant prediction with risk assessment and confidence score for informed decision-making.</p>
-                </div>
+    <div class="separator"></div>
+
+    <!-- Features Section -->
+    <section class="features-section">
+        <div class="section-header reveal">
+            <div class="overline">⬡ Platform Capabilities</div>
+            <h2>Enterprise-Grade Fraud Intelligence</h2>
+            <p>Built for fraud operations teams, credit analysts, and compliance officers who demand explainable AI.</p>
+        </div>
+
+        <div class="features-grid stagger-children">
+            <div class="glass-card feature-card" data-tilt>
+                <div class="feature-icon purple">🧠</div>
+                <h3>Preserved ML Core</h3>
+                <p>Same ensemble model, preprocessor, and 40% fraud threshold. Zero changes to your trained artifacts.</p>
+            </div>
+
+            <div class="glass-card feature-card" data-tilt>
+                <div class="feature-icon blue">🤖</div>
+                <h3>Orchestrated Agents</h3>
+                <p>Multi-step agent pipeline with structured reports, audit trails, and explainable risk drivers.</p>
+            </div>
+
+            <div class="glass-card feature-card" data-tilt>
+                <div class="feature-icon cyan">🏦</div>
+                <h3>Banking Advisory</h3>
+                <p>EDD triggers, manual review routing, STR filing guidance, and compliance disclaimers.</p>
+            </div>
+
+            <div class="glass-card feature-card" data-tilt>
+                <div class="feature-icon green">💬</div>
+                <h3>AI Advisor Chat</h3>
+                <p>Context-aware conversational interface. Ask about risk drivers, actions, and agent workflow.</p>
+            </div>
+
+            <div class="glass-card feature-card" data-tilt>
+                <div class="feature-icon amber">📐</div>
+                <h3>Risk Visualization</h3>
+                <p>Interactive charts, risk gauges, and signal cards that make complex analysis instantly comprehensible.</p>
+            </div>
+
+            <div class="glass-card feature-card" data-tilt>
+                <div class="feature-icon rose">🔌</div>
+                <h3>REST API</h3>
+                <p>JSON endpoint at <code>/api/analyze</code> for headless integration with existing banking systems.</p>
             </div>
         </div>
     </section>
 
-    <section class="stats">
-        <div class="container">
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-number">98%</div>
-                    <div class="stat-label">Detection Accuracy</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number">< 1s</div>
-                    <div class="stat-label">Processing Time</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number">10K+</div>
-                    <div class="stat-label">Records Analyzed</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number">3</div>
-                    <div class="stat-label">ML Models Combined</div>
-                </div>
+    <div class="separator"></div>
+
+    <!-- Stats Banner -->
+    <section class="stats-section reveal">
+        <div class="stats-banner" style="position: relative;">
+            <div class="stat-item">
+                <div class="stat-number" data-count="3">0</div>
+                <div class="stat-label">AI Agents</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number font-mono" data-count="40" data-suffix="%">0</div>
+                <div class="stat-label">Fraud Threshold</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number font-mono" data-count="14">0</div>
+                <div class="stat-label">Input Features</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number font-mono">REST</div>
+                <div class="stat-label">API Access</div>
             </div>
         </div>
     </section>
 
-    <footer>
-        <div class="container">
-            <div class="footer-content">
-                <p>&copy; 2026 SecureLoan Fraud Detection System. All rights reserved.</p>
-                <div class="social-links">
-                    <a href="#"><i class="fab fa-linkedin"></i></a>
-                    <a href="#"><i class="fab fa-github"></i></a>
-                    <a href="#"><i class="fab fa-twitter"></i></a>
-                </div>
+    <div class="separator"></div>
+
+    <!-- CTA -->
+    <section class="cta-section">
+        <div class="glass-card cta-card no-hover reveal">
+            <h2>Ready to Analyze?</h2>
+            <p>Submit a loan application and watch three AI agents collaborate to deliver comprehensive fraud analysis in under one second.</p>
+            <div class="flex gap-md justify-center flex-wrap">
+                <a href="/prediction" class="btn btn-primary btn-lg">Start Analysis →</a>
+                <a href="/agents" class="btn btn-outline btn-lg">View Architecture</a>
             </div>
         </div>
-    </footer>
-</body>
-</html>
+    </section>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        VANTA.NET({
+          el: "#vanta-bg",
+          mouseControls: true,
+          touchControls: true,
+          gyroControls: false,
+          minHeight: 200.00,
+          minWidth: 200.00,
+          scale: 1.00,
+          scaleMobile: 1.00,
+          color: 0x7c3aed,
+          backgroundColor: 0x05050a, // Dark background
+          points: 12.00,
+          maxDistance: 22.00,
+          spacing: 18.00
+        });
+    } catch(e) {
+        console.log("Vanta 3D background could not load:", e);
+    }
+});
+</script>
+{% endblock %}

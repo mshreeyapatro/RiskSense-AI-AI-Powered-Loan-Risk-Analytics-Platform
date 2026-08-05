@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}RiskSense AI — Login{% endblock %}
+
+{% block head %}
+<style>
+    .login-wrapper {
+        display: flex; align-items: center; justify-content: center;
+        min-height: calc(100vh - 120px); padding: var(--space-2xl) 0;
+    }
+    .login-card {
+        width: 100%; max-width: 480px; padding: var(--space-3xl);
+    }
+    .login-logo {
+        text-align: center; margin-bottom: var(--space-2xl);
+    }
+    .login-logo .brand-icon { font-size: 2rem; margin: 0 auto var(--space-md); }
+    .login-logo h1 { font-size: 1.5rem; font-weight: 900; letter-spacing: -0.03em; }
+    .login-logo p { color: var(--text-secondary); font-size: 0.85rem; margin-top: var(--space-xs); }
+
+    .role-cards { display: flex; flex-direction: column; gap: var(--space-md); margin-bottom: var(--space-2xl); }
+    .role-card-btn {
+        display: flex; align-items: center; gap: var(--space-lg);
+        padding: var(--space-lg) var(--space-xl);
+        background: var(--glass-bg); border: 2px solid var(--glass-border);
+        border-radius: var(--radius-lg); cursor: pointer;
+        transition: all var(--transition-base); text-align: left; width: 100%;
+        color: var(--text-primary);
+    }
+    .role-card-btn:hover { border-color: rgba(124,58,237,0.4); transform: translateY(-2px); background: rgba(124,58,237,0.05); }
+    .role-card-btn.selected { border-color: rgba(124,58,237,0.6); background: rgba(124,58,237,0.1); }
+    .role-icon { font-size: 1.8rem; flex-shrink: 0; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-md); }
+    .role-icon.analyst { background: rgba(6,182,212,0.15); }
+    .role-icon.manager { background: rgba(245,158,11,0.15); }
+    .role-icon.admin { background: rgba(124,58,237,0.15); }
+    .role-info h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 2px; }
+    .role-info p { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.4; }
+    .role-permissions { font-size: 0.7rem; color: var(--text-tertiary); margin-top: 4px; }
+    .role-select-indicator { margin-left: auto; font-size: 1.2rem; opacity: 0; transition: opacity var(--transition-fast); }
+    .role-card-btn.selected .role-select-indicator { opacity: 1; }
+
+    .login-note { font-size: 0.75rem; color: var(--text-tertiary); text-align: center; line-height: 1.5; margin-bottom: var(--space-xl); }
+
+    .current-role-display {
+        background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2);
+        border-radius: var(--radius-md); padding: var(--space-md); margin-bottom: var(--space-lg);
+        display: flex; align-items: center; gap: var(--space-md); font-size: 0.85rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-wrapper">
+    <div class="glass-card no-hover login-card reveal">
+        <div class="login-logo">
+            <div class="brand-icon" style="display:block;text-align:center;font-size:2rem;margin-bottom:var(--space-md);">⬡</div>
+            <h1>RiskSense AI</h1>
+            <p>Select your role to configure your workspace</p>
+        </div>
+
+        <!-- Current role info -->
+        <div class="current-role-display" id="currentRoleDisplay" style="display:none;">
+            <span style="font-size:1.2rem;">✅</span>
+            <span>Currently signed in as: <strong id="currentRoleName"></strong></span>
+        </div>
+
+        <div class="role-cards">
+            <button class="role-card-btn" data-role="analyst">
+                <div class="role-icon analyst">🔍</div>
+                <div class="role-info">
+                    <h3 style="color:#06b6d4;">Analyst</h3>
+                    <p>Fraud investigation and loan screening specialist</p>
+                    <div class="role-permissions">✓ Run predictions &nbsp; ✓ View cases &nbsp; ✓ Batch screening</div>
+                </div>
+                <div class="role-select-indicator">✓</div>
+            </button>
+            <button class="role-card-btn" data-role="manager">
+                <div class="role-icon manager">📊</div>
+                <div class="role-info">
+                    <h3 style="color:#f59e0b;">Manager</h3>
+                    <p>Credit risk team lead and case approval authority</p>
+                    <div class="role-permissions">✓ All Analyst &nbsp; ✓ Approve/Reject cases &nbsp; ✓ Portfolio view</div>
+                </div>
+                <div class="role-select-indicator">✓</div>
+            </button>
+            <button class="role-card-btn" data-role="admin">
+                <div class="role-icon admin">⚡</div>
+                <div class="role-info">
+                    <h3 style="color:#7c3aed;">Admin</h3>
+                    <p>Full platform access, model configuration, audit trails</p>
+                    <div class="role-permissions">✓ All access &nbsp; ✓ System health &nbsp; ✓ API management</div>
+                </div>
+                <div class="role-select-indicator">✓</div>
+            </button>
+        </div>
+
+        <p class="login-note">⚠️ This is a demo role simulation. No real authentication is required. <br>Your role preference is saved locally in your browser.</p>
+
+        <button class="btn btn-primary" style="width:100%;" id="loginBtn" disabled>Select a Role to Continue →</button>
+        <button class="btn btn-outline btn-sm" style="width:100%;margin-top:var(--space-md);" id="logoutBtn">Sign Out / Clear Role</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    const ROLE_KEY = 'risksense_role';
+    const ROLES = {
+        analyst: { label: 'Analyst', color: '#06b6d4' },
+        manager: { label: 'Manager', color: '#f59e0b' },
+        admin: { label: 'Admin', color: '#7c3aed' },
+    };
+
+    let selectedRole = null;
+    const saved = localStorage.getItem(ROLE_KEY);
+
+    // Show current role
+    if (saved) {
+        const el = document.getElementById('currentRoleDisplay');
+        const nameEl = document.getElementById('currentRoleName');
+        if (el && nameEl) {
+            el.style.display = 'flex';
+            nameEl.textContent = ROLES[saved]?.label || saved;
+        }
+        // Highlight currently saved role
+        const btn = document.querySelector(`[data-role="${saved}"]`);
+        if (btn) btn.classList.add('selected');
+    }
+
+    // Role card click
+    document.querySelectorAll('.role-card-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.role-card-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            selectedRole = btn.dataset.role;
+            document.getElementById('loginBtn').disabled = false;
+            document.getElementById('loginBtn').textContent = `Continue as ${ROLES[selectedRole]?.label} →`;
+        });
+    });
+
+    // Login
+    document.getElementById('loginBtn')?.addEventListener('click', () => {
+        if (!selectedRole) return;
+        localStorage.setItem(ROLE_KEY, selectedRole);
+        // Update role badge globally
+        if (window.RoleSystem) window.RoleSystem.apply(selectedRole);
+        if (window.showToast) showToast(`Signed in as ${ROLES[selectedRole]?.label}`, 'success');
+        setTimeout(() => window.location.href = '/dashboard', 800);
+    });
+
+    // Logout
+    document.getElementById('logoutBtn')?.addEventListener('click', () => {
+        localStorage.removeItem(ROLE_KEY);
+        document.getElementById('roleDisplay') && (document.getElementById('roleDisplay').textContent = '');
+        document.querySelectorAll('.role-card-btn').forEach(b => b.classList.remove('selected'));
+        const el = document.getElementById('currentRoleDisplay');
+        if (el) el.style.display = 'none';
+        selectedRole = null;
+        document.getElementById('loginBtn').disabled = true;
+        document.getElementById('loginBtn').textContent = 'Select a Role to Continue →';
+        if (window.showToast) showToast('Signed out successfully', 'info');
+    });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,550 @@
+{% extends "base.html" %}
+{% block title %}RiskSense AI — Agent Architecture{% endblock %}
+
+{% block head %}
+<style>
+    .agents-hero {
+        text-align: center;
+        padding: var(--space-4xl) 0 var(--space-3xl);
+        position: relative;
+    }
+
+    .agents-hero h1 {
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        font-weight: 900;
+        letter-spacing: -0.04em;
+        margin-bottom: var(--space-md);
+    }
+
+    .agents-hero p {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.75;
+    }
+
+    /* ---- Architecture Diagram ---- */
+    .architecture-section {
+        padding: var(--space-3xl) 0;
+    }
+
+    .arch-pipeline {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        max-width: 860px;
+        margin: 0 auto;
+    }
+
+    .arch-node {
+        display: grid;
+        grid-template-columns: 80px 1fr;
+        gap: var(--space-xl);
+        align-items: center;
+        padding: var(--space-xl);
+        background: var(--glass-bg);
+        backdrop-filter: blur(var(--glass-blur));
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-lg);
+        transition: all var(--transition-base);
+        cursor: default;
+    }
+
+    .arch-node:hover {
+        background: var(--glass-bg-hover);
+        border-color: var(--glass-border-hover);
+        transform: translateX(6px);
+    }
+
+    .arch-node.orchestrator { border-left: 3px solid var(--accent-tertiary); }
+    .arch-node.detection   { border-left: 3px solid var(--color-danger); }
+    .arch-node.analytics   { border-left: 3px solid var(--color-info); }
+    .arch-node.advisory    { border-left: 3px solid var(--color-warning); }
+
+    .arch-node-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        flex-shrink: 0;
+    }
+
+    .arch-node.orchestrator .arch-node-icon { background: rgba(124, 58, 237, 0.12); }
+    .arch-node.detection   .arch-node-icon { background: rgba(239, 68, 68, 0.1); }
+    .arch-node.analytics   .arch-node-icon { background: rgba(6, 182, 212, 0.1); }
+    .arch-node.advisory    .arch-node-icon { background: rgba(245, 158, 11, 0.1); }
+
+    .arch-node-content h3 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: var(--space-xs);
+        letter-spacing: -0.01em;
+    }
+
+    .arch-node-role {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: var(--space-sm);
+    }
+
+    .orchestrator .arch-node-role { color: var(--accent-tertiary); }
+    .detection .arch-node-role    { color: var(--color-danger); }
+    .analytics .arch-node-role    { color: var(--color-info); }
+    .advisory .arch-node-role     { color: var(--color-warning); }
+
+    .arch-node-content p {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        line-height: 1.65;
+    }
+
+    .arch-connector {
+        display: flex;
+        justify-content: flex-start;
+        padding-left: 118px;
+        height: 36px;
+        align-items: center;
+    }
+
+    .arch-connector-line {
+        width: 2px;
+        height: 36px;
+        background: linear-gradient(to bottom, var(--glass-border), var(--accent-tertiary));
+        position: relative;
+    }
+
+    .arch-connector-line::after {
+        content: '↓';
+        position: absolute;
+        bottom: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: var(--accent-tertiary);
+        font-size: 0.9rem;
+    }
+
+    @media (max-width: 600px) {
+        .arch-node { grid-template-columns: 1fr; text-align: center; }
+        .arch-node-icon { margin: 0 auto var(--space-sm); }
+        .arch-connector { padding-left: 50%; }
+    }
+
+    /* ---- Agent Detail Cards ---- */
+    .agents-detail-section {
+        padding: var(--space-4xl) 0;
+    }
+
+    .agents-detail-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-lg);
+    }
+
+    @media (max-width: 768px) {
+        .agents-detail-grid { grid-template-columns: 1fr; }
+    }
+
+    .agent-detail-card {
+        padding: var(--space-xl);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .agent-detail-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+    }
+
+    .agent-detail-card.orchestrator::before { background: linear-gradient(90deg, var(--accent-tertiary), transparent); }
+    .agent-detail-card.detection::before    { background: linear-gradient(90deg, var(--color-danger), transparent); }
+    .agent-detail-card.analytics::before    { background: linear-gradient(90deg, var(--color-info), transparent); }
+    .agent-detail-card.advisory::before     { background: linear-gradient(90deg, var(--color-warning), transparent); }
+
+    .agent-detail-header {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+        margin-bottom: var(--space-lg);
+    }
+
+    .agent-detail-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        flex-shrink: 0;
+    }
+
+    .orchestrator .agent-detail-icon { background: rgba(124, 58, 237, 0.12); }
+    .detection .agent-detail-icon    { background: rgba(239, 68, 68, 0.1); }
+    .analytics .agent-detail-icon    { background: rgba(6, 182, 212, 0.1); }
+    .advisory .agent-detail-icon     { background: rgba(245, 158, 11, 0.1); }
+
+    .agent-detail-header h3 {
+        font-size: 1rem;
+        font-weight: 700;
+        margin-bottom: 2px;
+    }
+
+    .agent-detail-header .role-tag {
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    .orchestrator .role-tag { color: var(--accent-tertiary); }
+    .detection .role-tag    { color: var(--color-danger); }
+    .analytics .role-tag    { color: var(--color-info); }
+    .advisory .role-tag     { color: var(--color-warning); }
+
+    .agent-detail-body p {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        line-height: 1.7;
+        margin-bottom: var(--space-lg);
+    }
+
+    .agent-outputs {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+    }
+
+    .agent-output-row {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+    }
+
+    .output-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .orchestrator .output-dot { background: var(--accent-tertiary); }
+    .detection .output-dot    { background: var(--color-danger); }
+    .analytics .output-dot    { background: var(--color-info); }
+    .advisory .output-dot     { background: var(--color-warning); }
+
+    /* ---- Model Specs ---- */
+    .model-specs-section {
+        padding: var(--space-4xl) 0;
+    }
+
+    .model-specs-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--space-lg);
+        margin-top: var(--space-2xl);
+    }
+
+    @media (max-width: 768px) {
+        .model-specs-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 480px) {
+        .model-specs-grid { grid-template-columns: 1fr; }
+    }
+
+    .spec-card {
+        padding: var(--space-xl);
+        text-align: center;
+    }
+
+    .spec-icon {
+        font-size: 2rem;
+        margin-bottom: var(--space-md);
+    }
+
+    .spec-card h4 {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-tertiary);
+        margin-bottom: var(--space-xs);
+    }
+
+    .spec-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+        font-family: var(--font-mono);
+        color: var(--text-primary);
+    }
+
+    /* ---- CTA ---- */
+    .agents-cta {
+        padding: var(--space-4xl) 0;
+        text-align: center;
+    }
+
+    .pipeline-demo-card {
+        max-width: 700px;
+        margin: 0 auto;
+        padding: var(--space-3xl);
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.06), rgba(99, 102, 241, 0.02));
+        border: 1px solid rgba(124, 58, 237, 0.12);
+    }
+
+    .pipeline-demo-card h2 {
+        font-size: 1.75rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        margin-bottom: var(--space-md);
+    }
+
+    .pipeline-demo-card p {
+        color: var(--text-secondary);
+        margin-bottom: var(--space-xl);
+        font-size: 1rem;
+        line-height: 1.7;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <!-- Hero -->
+    <section class="agents-hero">
+        <div class="badge badge-accent mb-lg reveal">⬡ Multi-Agent Architecture</div>
+        <h1 class="reveal" style="transition-delay: 0.05s;">Agent Pipeline</h1>
+        <p class="reveal" style="transition-delay: 0.1s;">RiskSense AI coordinates three specialized agents around your preserved fraud detection model — each with a distinct responsibility and structured data contract.</p>
+    </section>
+
+    <div class="separator"></div>
+
+    <!-- Architecture Pipeline Diagram -->
+    <section class="architecture-section">
+        <div class="section-header reveal">
+            <div class="overline">⬡ System Architecture</div>
+            <h2>The Agentic Pipeline</h2>
+            <p>Each loan application moves through a deterministic sequence of agents — no hallucination, no guesswork.</p>
+        </div>
+
+        <div class="arch-pipeline stagger-children">
+            <div class="arch-node orchestrator glass-card no-hover">
+                <div class="arch-node-icon">⬡</div>
+                <div class="arch-node-content">
+                    <h3>RiskSenseOrchestrator</h3>
+                    <div class="arch-node-role">Workflow Control</div>
+                    <p>Receives loan applications from the Flask routes, sequences agent execution in strict order, and assembles the unified <code>AgenticReport</code> dataclass with audit trail and executive summary.</p>
+                </div>
+            </div>
+
+            <div class="arch-connector" aria-hidden="true">
+                <div class="arch-connector-line"></div>
+            </div>
+
+            <div class="arch-node detection glass-card no-hover">
+                <div class="arch-node-icon">🛡️</div>
+                <div class="arch-node-content">
+                    <h3>Detection Agent</h3>
+                    <div class="arch-node-role">ML Fraud Scoring</div>
+                    <p>Invokes <code>loan_fraud_ensemble_model.pkl</code> and <code>preprocessor.pkl</code> without modification. Returns fraud probability, binary label at 40% threshold, and confidence band to the orchestrator.</p>
+                </div>
+            </div>
+
+            <div class="arch-connector" aria-hidden="true">
+                <div class="arch-connector-line"></div>
+            </div>
+
+            <div class="arch-node analytics glass-card no-hover">
+                <div class="arch-node-icon">📊</div>
+                <div class="arch-node-content">
+                    <h3>Analytics Agent</h3>
+                    <div class="arch-node-role">Feature Risk Interpretation</div>
+                    <p>Evaluates CIBIL score, DTI ratio, loan-to-income, existing EMI burden, employment stability, and age bracket against banking heuristics. Produces a composite risk score (0–100) with explainable severity-coded signals.</p>
+                </div>
+            </div>
+
+            <div class="arch-connector" aria-hidden="true">
+                <div class="arch-connector-line"></div>
+            </div>
+
+            <div class="arch-node advisory glass-card no-hover">
+                <div class="arch-node-icon">⚖️</div>
+                <div class="arch-node-content">
+                    <h3>Advisory Agent</h3>
+                    <div class="arch-node-role">Fraud Operations &amp; Lending Guidance</div>
+                    <p>Synthesizes ML output and analytics into prioritized banking actions (P0–P3): block &amp; escalate, EDD trigger, manual review routing, STR filing, or standard approval path with compliance disclaimers.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="separator"></div>
+
+    <!-- Agent Detail Cards -->
+    <section class="agents-detail-section">
+        <div class="section-header reveal">
+            <div class="overline">⬡ Agent Specifications</div>
+            <h2>Responsibilities &amp; Data Contracts</h2>
+            <p>Each agent operates with strict input/output contracts via Python dataclasses.</p>
+        </div>
+
+        <div class="agents-detail-grid stagger-children">
+
+            <!-- Orchestrator -->
+            <div class="glass-card agent-detail-card orchestrator" data-tilt>
+                <div class="agent-detail-header">
+                    <div class="agent-detail-icon">⬡</div>
+                    <div>
+                        <h3>RiskSenseOrchestrator</h3>
+                        <div class="role-tag">Pipeline Coordinator</div>
+                    </div>
+                </div>
+                <div class="agent-detail-body">
+                    <p>The central orchestration layer. Accepts raw form data from Flask routes, sequences each agent call, and assembles the final report. Handles both manual input and dataset sampling modes.</p>
+                    <div class="agent-outputs">
+                        <div class="overline" style="font-size: 0.7rem; margin-bottom: 4px;">Outputs</div>
+                        <div class="agent-output-row"><div class="output-dot orchestrator"></div> AgenticReport dataclass</div>
+                        <div class="agent-output-row"><div class="output-dot orchestrator"></div> workflow_steps trace list</div>
+                        <div class="agent-output-row"><div class="output-dot orchestrator"></div> executive_summary string</div>
+                        <div class="agent-output-row"><div class="output-dot orchestrator"></div> Chat response via chat_response()</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detection -->
+            <div class="glass-card agent-detail-card detection" data-tilt>
+                <div class="agent-detail-header">
+                    <div class="agent-detail-icon">🛡️</div>
+                    <div>
+                        <h3>Detection Agent</h3>
+                        <div class="role-tag">ML Fraud Scoring</div>
+                    </div>
+                </div>
+                <div class="agent-detail-body">
+                    <p>Wraps your saved pickle artifacts. Preprocesses raw form data through <code>preprocessor.pkl</code>, scores via <code>loan_fraud_ensemble_model.pkl</code>, and applies the 40% fraud threshold — zero changes to trained weights.</p>
+                    <div class="agent-outputs">
+                        <div class="overline" style="font-size: 0.7rem; margin-bottom: 4px;">Outputs</div>
+                        <div class="agent-output-row"><div class="output-dot detection"></div> probability (float 0.0–1.0)</div>
+                        <div class="agent-output-row"><div class="output-dot detection"></div> label ("FRAUD" | "GENUINE")</div>
+                        <div class="agent-output-row"><div class="output-dot detection"></div> is_fraud (bool)</div>
+                        <div class="agent-output-row"><div class="output-dot detection"></div> confidence_band (str)</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics -->
+            <div class="glass-card agent-detail-card analytics" data-tilt>
+                <div class="agent-detail-header">
+                    <div class="agent-detail-icon">📊</div>
+                    <div>
+                        <h3>Analytics Agent</h3>
+                        <div class="role-tag">Feature Risk Interpretation</div>
+                    </div>
+                </div>
+                <div class="agent-detail-body">
+                    <p>Rule-based risk signal engine that interprets 14 loan features against banking domain heuristics. Produces both a composite score and human-readable signal explanations for each risk factor.</p>
+                    <div class="agent-outputs">
+                        <div class="overline" style="font-size: 0.7rem; margin-bottom: 4px;">Risk Factors Evaluated</div>
+                        <div class="agent-output-row"><div class="output-dot analytics"></div> CIBIL credit score (300–900)</div>
+                        <div class="agent-output-row"><div class="output-dot analytics"></div> Debt-to-income ratio</div>
+                        <div class="agent-output-row"><div class="output-dot analytics"></div> Loan-to-income multiple</div>
+                        <div class="agent-output-row"><div class="output-dot analytics"></div> Employment &amp; age signals</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advisory -->
+            <div class="glass-card agent-detail-card advisory" data-tilt>
+                <div class="agent-detail-header">
+                    <div class="agent-detail-icon">⚖️</div>
+                    <div>
+                        <h3>Advisory Agent</h3>
+                        <div class="role-tag">Fraud Operations Guidance</div>
+                    </div>
+                </div>
+                <div class="agent-detail-body">
+                    <p>Synthesizes ML probability and analytics risk score into prioritized banking actions. Enforces compliance disclaimers and generates STR, EDD, or manual review triggers based on combined signal strength.</p>
+                    <div class="agent-outputs">
+                        <div class="overline" style="font-size: 0.7rem; margin-bottom: 4px;">Action Priorities</div>
+                        <div class="agent-output-row"><div class="output-dot advisory"></div> P0 — Block &amp; escalate immediately</div>
+                        <div class="agent-output-row"><div class="output-dot advisory"></div> P1 — EDD / STR filing trigger</div>
+                        <div class="agent-output-row"><div class="output-dot advisory"></div> P2 — Manual review queue</div>
+                        <div class="agent-output-row"><div class="output-dot advisory"></div> P3 — Standard approval path</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <div class="separator"></div>
+
+    <!-- Model Technical Specs -->
+    <section class="model-specs-section">
+        <div class="section-header reveal">
+            <div class="overline">⬡ ML Infrastructure</div>
+            <h2>Preserved Model Artifacts</h2>
+            <p>The transformation adds intelligence without touching your training pipeline.</p>
+        </div>
+
+        <div class="model-specs-grid stagger-children">
+            <div class="glass-card spec-card">
+                <div class="spec-icon">🧠</div>
+                <h4>Model Type</h4>
+                <div class="spec-value">Ensemble</div>
+            </div>
+            <div class="glass-card spec-card">
+                <div class="spec-icon">⚖️</div>
+                <h4>Fraud Threshold</h4>
+                <div class="spec-value">40%</div>
+            </div>
+            <div class="glass-card spec-card">
+                <div class="spec-icon">📐</div>
+                <h4>Input Features</h4>
+                <div class="spec-value">14</div>
+            </div>
+            <div class="glass-card spec-card">
+                <div class="spec-icon">🔬</div>
+                <h4>Balancing</h4>
+                <div class="spec-value">SMOTE</div>
+            </div>
+            <div class="glass-card spec-card">
+                <div class="spec-icon">💾</div>
+                <h4>Model Size</h4>
+                <div class="spec-value">~95 MB</div>
+            </div>
+            <div class="glass-card spec-card">
+                <div class="spec-icon">🔌</div>
+                <h4>API Access</h4>
+                <div class="spec-value">REST JSON</div>
+            </div>
+        </div>
+    </section>
+
+    <div class="separator"></div>
+
+    <!-- CTA -->
+    <section class="agents-cta">
+        <div class="glass-card pipeline-demo-card no-hover reveal">
+            <h2>See It In Action</h2>
+            <p>Submit a real loan application and watch all three agents execute in sequence — Detection scores fraud probability, Analytics explains risk signals, Advisory recommends banking actions.</p>
+            <div class="flex gap-md justify-center flex-wrap">
+                <a href="/prediction" class="btn btn-primary btn-lg">Run Full Pipeline →</a>
+                <a href="/advisor" class="btn btn-outline btn-lg">AI Advisor Chat</a>
+            </div>
+        </div>
+    </section>
+
+</div>
+{% endblock %}

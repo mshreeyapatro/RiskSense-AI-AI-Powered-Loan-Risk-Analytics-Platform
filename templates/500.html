@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}500 — Server Error · RiskSense AI{% endblock %}
+
+{% block head %}
+<style>
+    .error-page {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: var(--space-4xl) 0;
+    }
+
+    .error-content {
+        max-width: 560px;
+    }
+
+    .error-code {
+        font-size: clamp(6rem, 18vw, 12rem);
+        font-weight: 900;
+        letter-spacing: -0.06em;
+        line-height: 1;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(255,255,255,0.03));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: var(--space-xl);
+        animation: pulse-glow 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse-glow {
+        0%, 100% { filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.1)); }
+        50% { filter: drop-shadow(0 0 40px rgba(245, 158, 11, 0.3)); }
+    }
+
+    .error-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-sm);
+        padding: 0.35rem 1rem;
+        background: rgba(245, 158, 11, 0.08);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+        border-radius: var(--radius-full);
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--color-warning);
+        margin-bottom: var(--space-xl);
+    }
+
+    .error-title {
+        font-size: clamp(1.5rem, 4vw, 2.2rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        margin-bottom: var(--space-md);
+    }
+
+    .error-desc {
+        color: var(--text-secondary);
+        font-size: 1rem;
+        line-height: 1.7;
+        margin-bottom: var(--space-2xl);
+    }
+
+    .error-actions {
+        display: flex;
+        gap: var(--space-md);
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .error-details {
+        margin-top: var(--space-2xl);
+        padding: var(--space-lg);
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-md);
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-tertiary);
+        text-align: left;
+    }
+
+    .error-details .detail-label {
+        color: var(--color-warning);
+        margin-bottom: var(--space-xs);
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    .error-nav {
+        margin-top: var(--space-3xl);
+        padding-top: var(--space-xl);
+        border-top: 1px solid var(--glass-border);
+    }
+
+    .error-nav p {
+        font-size: 0.8rem;
+        color: var(--text-tertiary);
+        margin-bottom: var(--space-md);
+    }
+
+    .error-links {
+        display: flex;
+        gap: var(--space-lg);
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .error-links a {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: color var(--transition-fast);
+    }
+
+    .error-links a:hover {
+        color: var(--accent-tertiary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="error-page">
+        <div class="error-content">
+            <div class="error-code">500</div>
+            <div class="error-badge">
+                <span>⚠</span>
+                Internal Server Error
+            </div>
+            <h1 class="error-title">Something went wrong</h1>
+            <p class="error-desc">The server encountered an unexpected error while processing your request. The agent pipeline may have encountered an unhandled condition. Please try again.</p>
+            <div class="error-actions">
+                <a href="/" class="btn btn-primary btn-lg">← Back to Home</a>
+                <button class="btn btn-outline btn-lg" onclick="window.history.back()">Try Again</button>
+            </div>
+            <div class="error-details">
+                <div class="detail-label">Error Context</div>
+                HTTP 500 · Internal Server Error · RiskSense AI Platform
+            </div>
+            <div class="error-nav">
+                <p>Navigate to a working page:</p>
+                <div class="error-links">
+                    <a href="/prediction">Analysis</a>
+                    <a href="/dashboard">Dashboard</a>
+                    <a href="/advisor">Advisor</a>
+                    <a href="/agents">Agents</a>
+                    <a href="/about">About</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

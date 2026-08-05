@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}RiskSense AI — Case Management{% endblock %}
+
+{% block head %}
+<style>
+    .cases-hero { padding: var(--space-3xl) 0 var(--space-2xl); display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: var(--space-lg); }
+    .cases-hero h1 { font-size: clamp(1.75rem,4vw,2.5rem); font-weight: 900; letter-spacing: -0.03em; }
+    .cases-hero p { color: var(--text-secondary); font-size: 0.9rem; }
+
+    .cases-toolbar {
+        display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-md);
+        margin-bottom: var(--space-xl); padding: var(--space-lg);
+    }
+    .cases-search {
+        flex: 1; min-width: 200px; padding: var(--space-sm) var(--space-md);
+        background: var(--glass-bg); border: 1px solid var(--glass-border);
+        border-radius: var(--radius-md); color: var(--text-primary);
+        font-size: 0.875rem; font-family: var(--font-sans);
+    }
+    .cases-search:focus { outline: none; border-color: rgba(124,58,237,0.4); }
+    .status-filter { display: flex; gap: var(--space-xs); flex-wrap: wrap; }
+    .status-chip {
+        padding: 4px 12px; border-radius: 100px; border: 1px solid var(--glass-border);
+        background: transparent; color: var(--text-secondary); font-size: 0.78rem;
+        cursor: pointer; transition: all var(--transition-fast);
+    }
+    .status-chip.active, .status-chip:hover {
+        background: rgba(124,58,237,0.15); border-color: rgba(124,58,237,0.4); color: var(--text-primary);
+    }
+
+    /* Case Cards Grid */
+    .cases-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: var(--space-lg); margin-bottom: var(--space-3xl); }
+
+    .case-card { padding: var(--space-xl); transition: all var(--transition-base); cursor: pointer; }
+    .case-card:hover { transform: translateY(-3px); }
+
+    .case-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: var(--space-md); }
+    .case-id { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-tertiary); }
+    .case-status {
+        padding: 3px 10px; border-radius: 100px; font-size: 0.72rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .case-status.open { background: rgba(239,68,68,0.15); color: var(--color-danger); }
+    .case-status.reviewing { background: rgba(245,158,11,0.15); color: var(--color-warning); }
+    .case-status.resolved { background: rgba(16,185,129,0.15); color: var(--color-success); }
+
+    .case-title { font-size: 0.95rem; font-weight: 700; margin-bottom: var(--space-xs); }
+    .case-meta { font-size: 0.78rem; color: var(--text-secondary); margin-bottom: var(--space-md); }
+    .case-tags { display: flex; gap: var(--space-xs); flex-wrap: wrap; margin-bottom: var(--space-md); }
+    .case-tag { padding: 2px 8px; background: var(--glass-bg); border-radius: 4px; font-size: 0.72rem; color: var(--text-tertiary); border: 1px solid var(--glass-border); }
+    .case-actions { display: flex; gap: var(--space-sm); margin-top: var(--space-md); }
+    .case-note { font-size: 0.78rem; color: var(--text-secondary); font-style: italic; border-left: 2px solid var(--glass-border); padding-left: var(--space-sm); margin-top: var(--space-sm); }
+
+    .empty-cases { text-align: center; padding: var(--space-4xl); grid-column: 1/-1; color: var(--text-tertiary); }
+    .empty-cases .icon { font-size: 3rem; margin-bottom: var(--space-lg); opacity: 0.4; }
+    .empty-cases h3 { font-size: 1rem; font-weight: 600; margin-bottom: var(--space-sm); color: var(--text-secondary); }
+
+    /* Case Modal */
+    .case-modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 1000; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; }
+    .case-modal-backdrop.open { opacity: 1; }
+    .case-modal { background: var(--surface-elevated); border: 1px solid var(--glass-border); border-radius: var(--radius-xl); padding: var(--space-2xl); max-width: 600px; width: 90vw; max-height: 80vh; overflow-y: auto; transform: scale(0.95); transition: transform 0.3s; }
+    .case-modal-backdrop.open .case-modal { transform: scale(1); }
+    .case-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-xl); }
+    .case-modal-header h2 { font-size: 1.1rem; font-weight: 700; }
+    .modal-close { background: none; border: none; color: var(--text-tertiary); font-size: 1.2rem; cursor: pointer; transition: color var(--transition-fast); }
+    .modal-close:hover { color: var(--text-primary); }
+    .modal-field-group { margin-bottom: var(--space-lg); }
+    .modal-field-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); margin-bottom: var(--space-xs); }
+    .modal-textarea { width: 100%; min-height: 80px; padding: var(--space-sm) var(--space-md); background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: var(--radius-md); color: var(--text-primary); font-size: 0.875rem; font-family: var(--font-sans); resize: vertical; }
+    .modal-textarea:focus { outline: none; border-color: rgba(124,58,237,0.4); }
+    .modal-status-btns { display: flex; gap: var(--space-sm); flex-wrap: wrap; }
+    .modal-status-btn { padding: 6px 16px; border-radius: 100px; border: 1px solid var(--glass-border); background: transparent; cursor: pointer; font-size: 0.82rem; transition: all var(--transition-fast); color: var(--text-secondary); }
+    .modal-status-btn:hover { background: var(--glass-bg); color: var(--text-primary); }
+    .modal-status-btn.active-open { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.4); color: var(--color-danger); }
+    .modal-status-btn.active-reviewing { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.4); color: var(--color-warning); }
+    .modal-status-btn.active-resolved { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.4); color: var(--color-success); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <!-- Header -->
+    <div class="cases-hero reveal">
+        <div>
+            <div class="badge badge-accent mb-md">⬡ Case Management</div>
+            <h1>Fraud Investigation Cases</h1>
+            <p>Track, manage, and resolve fraud investigation workflows</p>
+        </div>
+        <div style="display:flex;gap:var(--space-md);">
+            <button class="btn btn-primary" id="newCaseBtn">+ New Case</button>
+            <button class="btn btn-outline btn-sm" id="clearCasesBtn">🗑 Clear All</button>
+        </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="glass-card no-hover cases-toolbar reveal">
+        <input type="text" class="cases-search" id="casesSearch" placeholder="🔍 Search cases by loan type, amount, ID...">
+        <div class="status-filter">
+            <button class="status-chip active" data-status="all">All</button>
+            <button class="status-chip" data-status="open">🔴 Open</button>
+            <button class="status-chip" data-status="reviewing">🟡 Under Review</button>
+            <button class="status-chip" data-status="resolved">🟢 Resolved</button>
+        </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-md);margin-bottom:var(--space-xl);" class="stagger-children" id="caseStats">
+        <div class="glass-card" style="padding:var(--space-lg);text-align:center;">
+            <div style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-tertiary);margin-bottom:var(--space-xs);">Open Cases</div>
+            <div style="font-size:1.8rem;font-weight:900;font-family:var(--font-mono);color:var(--color-danger);" id="openCount">0</div>
+        </div>
+        <div class="glass-card" style="padding:var(--space-lg);text-align:center;">
+            <div style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-tertiary);margin-bottom:var(--space-xs);">Under Review</div>
+            <div style="font-size:1.8rem;font-weight:900;font-family:var(--font-mono);color:var(--color-warning);" id="reviewCount">0</div>
+        </div>
+        <div class="glass-card" style="padding:var(--space-lg);text-align:center;">
+            <div style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-tertiary);margin-bottom:var(--space-xs);">Resolved</div>
+            <div style="font-size:1.8rem;font-weight:900;font-family:var(--font-mono);color:var(--color-success);" id="resolvedCount">0</div>
+        </div>
+    </div>
+
+    <!-- Cases Grid -->
+    <div class="cases-grid" id="casesGrid"></div>
+
+</div>
+
+<!-- Case Detail Modal -->
+<div class="case-modal-backdrop" id="caseModal">
+    <div class="case-modal">
+        <div class="case-modal-header">
+            <h2 id="modalCaseTitle">Case Details</h2>
+            <button class="modal-close" id="modalClose">✕</button>
+        </div>
+        <div class="modal-field-group">
+            <div class="modal-field-label">Status</div>
+            <div class="modal-status-btns">
+                <button class="modal-status-btn" data-status-set="open">🔴 Open</button>
+                <button class="modal-status-btn" data-status-set="reviewing">🟡 Under Review</button>
+                <button class="modal-status-btn" data-status-set="resolved">🟢 Resolved</button>
+            </div>
+        </div>
+        <div class="modal-field-group">
+            <div class="modal-field-label">Analyst Notes</div>
+            <textarea class="modal-textarea" id="modalNotes" placeholder="Add investigation notes, findings, evidence..."></textarea>
+        </div>
+        <div id="modalDetails" style="margin-bottom:var(--space-lg);"></div>
+        <div style="display:flex;gap:var(--space-md);justify-content:flex-end;">
+            <button class="btn btn-secondary" id="modalCancel">Cancel</button>
+            <button class="btn btn-primary" id="modalSave">Save Changes</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/cases.js') }}"></script>
+{% endblock %}

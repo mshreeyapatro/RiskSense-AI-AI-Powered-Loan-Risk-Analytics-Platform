@@ -1,0 +1,402 @@
+{% extends "base.html" %}
+{% block title %}Compare Applications · RiskSense AI{% endblock %}
+
+{% block head %}
+<style>
+.compare-header {
+    text-align: center;
+    padding: var(--space-3xl) 0 var(--space-2xl);
+}
+.compare-header .overline {
+    display: inline-flex; align-items: center; gap: var(--space-sm);
+    font-size: 0.75rem; font-weight: 600; color: var(--accent-tertiary);
+    text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: var(--space-md);
+}
+.compare-header h1 {
+    font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 900;
+    letter-spacing: -0.04em; line-height: 1.1; margin-bottom: var(--space-md);
+    background: linear-gradient(135deg, var(--text-primary) 40%, var(--accent-tertiary));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.compare-header p { color: var(--text-secondary); font-size: 1rem; max-width: 560px; margin: 0 auto; }
+
+.compare-panel h2 {
+    font-size: 1rem; font-weight: 700; margin-bottom: var(--space-xl);
+    display: flex; align-items: center; gap: var(--space-sm);
+}
+
+.compare-field-group { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); }
+@media(max-width:640px){ .compare-field-group { grid-template-columns: 1fr; } }
+
+.compare-actions {
+    display: flex; justify-content: center; gap: var(--space-md);
+    margin: var(--space-2xl) 0; flex-wrap: wrap;
+}
+.compare-actions .btn { min-width: 180px; }
+
+/* Result panel */
+.result-panel { margin-top: var(--space-3xl); display: none; }
+.result-header {
+    text-align: center;
+    margin-bottom: var(--space-2xl);
+}
+.result-header h2 { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.03em; }
+
+.side-card {
+    padding: var(--space-lg) var(--space-xl);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+}
+.side-card h3 { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary); margin-bottom: var(--space-lg); }
+
+.metric-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: var(--space-sm) 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 0.85rem;
+}
+.metric-row:last-child { border-bottom: none; }
+.metric-label { color: var(--text-secondary); }
+.metric-value { font-weight: 700; font-family: var(--font-mono); }
+
+.winner-banner {
+    text-align: center; padding: var(--space-2xl);
+    background: var(--glass-bg); border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg); position: relative; overflow: hidden;
+}
+.winner-banner::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(16,185,129,0.15), transparent 60%);
+}
+#compareSpinner { display: none; text-align: center; padding: var(--space-3xl); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="compare-header reveal">
+        <div class="overline">⊕ Side-by-Side</div>
+        <h1>Loan Comparison Tool</h1>
+        <p>Run two loan applications simultaneously through the full agentic pipeline and compare risk, probability, and advisory decisions side-by-side.</p>
+    </div>
+
+    <div class="compare-grid reveal">
+        <!-- Application A -->
+        <div class="glass-card no-hover compare-panel">
+            <h2><span class="badge badge-accent">A</span> Application One</h2>
+
+            <div class="preset-btns">
+                <button class="btn-preset-danger" onclick="fillPreset('a', 'high')">🔴 High Risk</button>
+                <button class="btn-preset-success" onclick="fillPreset('a', 'low')">🟢 Low Risk</button>
+            </div>
+
+            <div class="compare-field-group">
+                <div class="form-group">
+                    <label class="form-label">Loan Type</label>
+                    <select id="a_loan_type" class="form-select">
+                        <option>Home Loan</option><option>Personal Loan</option>
+                        <option>Car Loan</option><option>Education Loan</option><option>Business Loan</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Amount ($)</label>
+                    <input type="number" id="a_loan_amount" class="form-input" placeholder="2500000" value="2500000">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tenure (months)</label>
+                    <input type="number" id="a_tenure" class="form-input" placeholder="120" value="120">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Interest Rate (%)</label>
+                    <input type="number" id="a_interest" class="form-input" step="0.1" placeholder="8.5" value="8.5">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Purpose</label>
+                    <select id="a_purpose" class="form-select">
+                        <option>Home Renovation</option><option>Business Expansion</option>
+                        <option>Debt Consolidation</option><option>Education</option>
+                        <option>Medical Emergency</option><option>Vehicle Purchase</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Employment</label>
+                    <select id="a_employment" class="form-select">
+                        <option>Salaried</option><option>Self-Employed</option>
+                        <option>Business Owner</option><option>Student</option>
+                        <option>Unemployed</option><option>Retired</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Monthly Income ($)</label>
+                    <input type="number" id="a_income" class="form-input" placeholder="120000" value="120000">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">CIBIL Score</label>
+                    <input type="number" id="a_cibil" class="form-input" placeholder="810" value="810">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Existing EMIs ($)</label>
+                    <input type="number" id="a_emis" class="form-input" placeholder="8000" value="8000">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Debt-to-Income</label>
+                    <input type="number" id="a_dti" class="form-input" step="0.01" placeholder="0.18" value="0.18">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Property</label>
+                    <select id="a_property" class="form-select">
+                        <option>Owned</option><option>Rented</option><option>Jointly Owned</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Age</label>
+                    <input type="number" id="a_age" class="form-input" placeholder="35" value="35">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Gender</label>
+                    <select id="a_gender" class="form-select">
+                        <option>Female</option><option>Male</option><option>Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Dependents</label>
+                    <input type="number" id="a_dependents" class="form-input" placeholder="1" value="1">
+                </div>
+            </div>
+        </div>
+
+        <!-- Application B -->
+        <div class="glass-card no-hover compare-panel">
+            <h2><span class="badge badge-warning">B</span> Application Two</h2>
+
+            <div class="preset-btns">
+                <button class="btn-preset-danger" onclick="fillPreset('b', 'high')">🔴 High Risk</button>
+                <button class="btn-preset-success" onclick="fillPreset('b', 'low')">🟢 Low Risk</button>
+            </div>
+
+            <div class="compare-field-group">
+                <div class="form-group">
+                    <label class="form-label">Loan Type</label>
+                    <select id="b_loan_type" class="form-select">
+                        <option>Personal Loan</option><option>Home Loan</option>
+                        <option>Car Loan</option><option>Education Loan</option><option>Business Loan</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Amount ($)</label>
+                    <input type="number" id="b_loan_amount" class="form-input" placeholder="4500000" value="4500000">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tenure (months)</label>
+                    <input type="number" id="b_tenure" class="form-input" placeholder="360" value="360">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Interest Rate (%)</label>
+                    <input type="number" id="b_interest" class="form-input" step="0.1" placeholder="17.5" value="17.5">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Purpose</label>
+                    <select id="b_purpose" class="form-select">
+                        <option>Debt Consolidation</option><option>Home Renovation</option>
+                        <option>Business Expansion</option><option>Education</option>
+                        <option>Medical Emergency</option><option>Vehicle Purchase</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Employment</label>
+                    <select id="b_employment" class="form-select">
+                        <option>Unemployed</option><option>Salaried</option>
+                        <option>Self-Employed</option><option>Business Owner</option>
+                        <option>Student</option><option>Retired</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Monthly Income ($)</label>
+                    <input type="number" id="b_income" class="form-input" placeholder="18000" value="18000">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">CIBIL Score</label>
+                    <input type="number" id="b_cibil" class="form-input" placeholder="420" value="420">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Existing EMIs ($)</label>
+                    <input type="number" id="b_emis" class="form-input" placeholder="45000" value="45000">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Debt-to-Income</label>
+                    <input type="number" id="b_dti" class="form-input" step="0.01" placeholder="0.82" value="0.82">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Property</label>
+                    <select id="b_property" class="form-select">
+                        <option>Rented</option><option>Owned</option><option>Jointly Owned</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Age</label>
+                    <input type="number" id="b_age" class="form-input" placeholder="58" value="58">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Gender</label>
+                    <select id="b_gender" class="form-select">
+                        <option>Male</option><option>Female</option><option>Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Dependents</label>
+                    <input type="number" id="b_dependents" class="form-input" placeholder="4" value="4">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compare Button -->
+    <div class="compare-actions reveal">
+        <button class="btn btn-primary btn-lg" id="compareBtn" onclick="runComparison()">
+            ⊕ Run Comparison
+        </button>
+        <a href="/prediction" class="btn btn-outline btn-lg">Single Analysis →</a>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="compareSpinner">
+        <div class="loading-spinner" style="width:40px;height:40px;margin:0 auto var(--space-lg);"></div>
+        <p style="color:var(--text-secondary); font-size:0.9rem;">Agents are analyzing both applications...</p>
+    </div>
+
+    <!-- Results -->
+    <div class="result-panel" id="resultPanel">
+        <div class="result-header">
+            <h2>Comparison Results</h2>
+            <p style="color:var(--text-secondary); font-size:0.9rem; margin-top:var(--space-sm);">Both applications processed through the full agentic pipeline</p>
+        </div>
+
+        <div class="compare-result-grid">
+            <!-- App A result -->
+            <div class="side-card" id="resultA">
+                <h3><span class="badge badge-accent" style="margin-right:6px;">A</span> Application One</h3>
+                <div id="resultAContent"></div>
+            </div>
+
+            <!-- VS divider -->
+            <div class="compare-vs">VS</div>
+
+            <!-- App B result -->
+            <div class="side-card" id="resultB">
+                <h3><span class="badge badge-warning" style="margin-right:6px;">B</span> Application Two</h3>
+                <div id="resultBContent"></div>
+            </div>
+        </div>
+
+        <!-- Winner banner -->
+        <div class="winner-banner reveal" id="winnerBanner" style="margin-top: var(--space-2xl);">
+            <div id="winnerContent"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/prediction.js') }}"></script>
+<script>
+const HIGH_RISK = { loan_type: 'Personal Loan', loan_amount: '4500000', tenure: '360', interest: '17.5', purpose: 'Debt Consolidation', employment: 'Unemployed', income: '18000', cibil: '420', emis: '45000', dti: '0.82', property: 'Rented', age: '58', gender: 'Male', dependents: '4' };
+const LOW_RISK  = { loan_type: 'Home Loan', loan_amount: '2500000', tenure: '120', interest: '8.5', purpose: 'Home Renovation', employment: 'Salaried', income: '120000', cibil: '810', emis: '8000', dti: '0.18', property: 'Owned', age: '35', gender: 'Female', dependents: '1' };
+
+function fillPreset(side, type) {
+    const data = type === 'high' ? HIGH_RISK : LOW_RISK;
+    const prefix = side + '_';
+    for (const [k, v] of Object.entries(data)) {
+        const el = document.getElementById(prefix + k);
+        if (el) el.value = v;
+    }
+    if (window.showToast) showToast(`${side.toUpperCase()} filled with ${type === 'high' ? '🔴 High-Risk' : '🟢 Low-Risk'} preset`, type === 'high' ? 'warning' : 'success');
+}
+
+function getFormData(prefix) {
+    const flds = ['loan_type','loan_amount','tenure','interest','purpose','employment','income','cibil','emis','dti','property','age','gender','dependents'];
+    const d = {};
+    flds.forEach(f => { const el = document.getElementById(prefix + f); if (el) d[f] = el.value; });
+    return d;
+}
+
+function renderResult(container, data) {
+    const pred = data.prediction;
+    const analytics = data.analytics;
+    const advisory = data.advisory;
+    const isFraud = pred.is_fraud;
+    const badgeClass = isFraud ? 'badge-danger' : 'badge-success';
+    const signals = analytics.signals.slice(0, 3).map(s =>
+        `<div class="metric-row"><span class="metric-label">${s.factor}</span><span class="badge badge-${s.severity==='HIGH'?'danger':s.severity==='MEDIUM'?'warning':'success'}" style="font-size:0.65rem;">${s.severity}</span></div>`
+    ).join('');
+
+    container.innerHTML = `
+        <div style="margin-bottom: var(--space-lg); text-align:center; padding: var(--space-lg); background: var(--glass-bg); border-radius: var(--radius-md);">
+            <span class="badge ${badgeClass}" style="font-size:0.85rem; padding: 0.4rem 1rem;">${pred.label}</span>
+            <div style="font-size: 2rem; font-weight:900; margin: var(--space-sm) 0; font-family: var(--font-mono);">${(pred.probability*100).toFixed(1)}%</div>
+            <div style="font-size:0.78rem; color:var(--text-tertiary);">Fraud Probability</div>
+        </div>
+        <div class="metric-row"><span class="metric-label">Risk Score</span><span class="metric-value">${analytics.risk_score}/100</span></div>
+        <div class="metric-row"><span class="metric-label">Risk Level</span><span class="metric-value">${analytics.risk_level}</span></div>
+        <div class="metric-row"><span class="metric-label">Decision</span><span class="metric-value" style="font-size:0.78rem;">${advisory.decision}</span></div>
+        <div style="margin-top: var(--space-lg); font-size:0.72rem; font-weight:600; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:var(--space-sm);">Top Signals</div>
+        ${signals}
+    `;
+}
+
+async function runComparison() {
+    const btn = document.getElementById('compareBtn');
+    const spinner = document.getElementById('compareSpinner');
+    const resultPanel = document.getElementById('resultPanel');
+
+    btn.disabled = true;
+    btn.textContent = 'Analyzing...';
+    spinner.style.display = 'block';
+    resultPanel.style.display = 'none';
+
+    try {
+        const [resA, resB] = await Promise.all([
+            fetch('/api/analyze', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(getFormData('a_')) }),
+            fetch('/api/analyze', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(getFormData('b_')) })
+        ]);
+
+        const dataA = await resA.json();
+        const dataB = await resB.json();
+
+        if (dataA.error) throw new Error('App A: ' + dataA.error);
+        if (dataB.error) throw new Error('App B: ' + dataB.error);
+
+        renderResult(document.getElementById('resultAContent'), dataA);
+        renderResult(document.getElementById('resultBContent'), dataB);
+
+        // Winner logic
+        const aRisk = dataA.analytics.risk_score;
+        const bRisk = dataB.analytics.risk_score;
+        const winnerDiv = document.getElementById('winnerContent');
+        const delta = Math.abs(aRisk - bRisk);
+
+        if (aRisk < bRisk) {
+            winnerDiv.innerHTML = `<div style="font-size:2rem;margin-bottom:var(--space-sm);">🏆</div><h3 style="font-size:1.3rem;font-weight:800;margin-bottom:var(--space-sm);">Application A is Lower Risk</h3><p style="color:var(--text-secondary);font-size:0.9rem;">Application A has a ${delta} point lower risk score. It is the recommended candidate for approval.</p>`;
+        } else if (bRisk < aRisk) {
+            winnerDiv.innerHTML = `<div style="font-size:2rem;margin-bottom:var(--space-sm);">🏆</div><h3 style="font-size:1.3rem;font-weight:800;margin-bottom:var(--space-sm);">Application B is Lower Risk</h3><p style="color:var(--text-secondary);font-size:0.9rem;">Application B has a ${delta} point lower risk score. It is the recommended candidate for approval.</p>`;
+        } else {
+            winnerDiv.innerHTML = `<div style="font-size:2rem;margin-bottom:var(--space-sm);">⚖️</div><h3 style="font-size:1.3rem;font-weight:800;margin-bottom:var(--space-sm);">Equal Risk Level</h3><p style="color:var(--text-secondary);font-size:0.9rem;">Both applications carry an identical risk score. Review advisory items individually for the final decision.</p>`;
+        }
+
+        spinner.style.display = 'none';
+        resultPanel.style.display = 'block';
+        resultPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        if (window.showToast) showToast('Comparison complete!', 'success');
+    } catch(err) {
+        spinner.style.display = 'none';
+        btn.disabled = false;
+        btn.textContent = '⊕ Run Comparison';
+        if (window.showToast) showToast('Analysis failed: ' + err.message, 'danger');
+    }
+
+    btn.disabled = false;
+    btn.textContent = '⊕ Run Comparison';
+}
+</script>
+{% endblock %}

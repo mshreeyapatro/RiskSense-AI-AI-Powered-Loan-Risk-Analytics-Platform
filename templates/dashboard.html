@@ -1,0 +1,706 @@
+{% extends "base.html" %}
+{% block title %}RiskSense AI — Analytics Dashboard{% endblock %}
+
+{% block head %}
+<style>
+    .dashboard-hero {
+        padding: var(--space-3xl) 0 var(--space-2xl);
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: var(--space-lg);
+    }
+
+    .dashboard-hero h1 {
+        font-size: clamp(1.75rem, 4vw, 2.5rem);
+        font-weight: 900;
+        letter-spacing: -0.03em;
+        margin-bottom: var(--space-xs);
+    }
+
+    .dashboard-hero p {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .dashboard-sub {
+        font-size: 0.78rem;
+        color: var(--text-tertiary);
+        font-family: var(--font-mono);
+    }
+
+    /* ---- KPI Row ---- */
+    .kpi-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--space-md);
+        margin-bottom: var(--space-xl);
+    }
+
+    @media (max-width: 900px) {
+        .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 480px) {
+        .kpi-row { grid-template-columns: 1fr; }
+    }
+
+    .kpi-card {
+        padding: var(--space-xl);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .kpi-card::after {
+        content: '';
+        position: absolute;
+        bottom: 0; left: 0; right: 0;
+        height: 2px;
+        opacity: 0;
+        transition: opacity var(--transition-base);
+    }
+
+    .kpi-card:hover::after { opacity: 1; }
+
+    .kpi-card.total::after { background: linear-gradient(90deg, var(--accent-tertiary), transparent); }
+    .kpi-card.fraud::after  { background: linear-gradient(90deg, var(--color-danger), transparent); }
+    .kpi-card.genuine::after { background: linear-gradient(90deg, var(--color-success), transparent); }
+    .kpi-card.avg::after    { background: linear-gradient(90deg, var(--color-warning), transparent); }
+
+    .kpi-label {
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-tertiary);
+        margin-bottom: var(--space-sm);
+    }
+
+    .kpi-value {
+        font-size: 2.2rem;
+        font-weight: 900;
+        letter-spacing: -0.03em;
+        font-family: var(--font-mono);
+        line-height: 1;
+        margin-bottom: var(--space-xs);
+    }
+
+    .kpi-card.fraud .kpi-value   { color: var(--color-danger); }
+    .kpi-card.genuine .kpi-value { color: var(--color-success); }
+
+    .kpi-sub {
+        font-size: 0.78rem;
+        color: var(--text-tertiary);
+    }
+
+    /* ---- Charts Row ---- */
+    .charts-row {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: var(--space-lg);
+        margin-bottom: var(--space-xl);
+    }
+
+    @media (max-width: 900px) {
+        .charts-row { grid-template-columns: 1fr; }
+    }
+
+    .chart-card {
+        padding: var(--space-xl);
+    }
+
+    .chart-title {
+        font-size: 0.85rem;
+        font-weight: 700;
+        margin-bottom: var(--space-lg);
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+    }
+
+    .chart-title .overline {
+        font-size: 0.68rem;
+        margin: 0;
+    }
+
+    .donut-wrapper {
+        width: 200px;
+        height: 200px;
+        margin: 0 auto var(--space-lg);
+        position: relative;
+    }
+
+    .donut-center {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+    }
+
+    .donut-percent {
+        font-size: 1.8rem;
+        font-weight: 900;
+        font-family: var(--font-mono);
+        color: var(--color-danger);
+        line-height: 1;
+    }
+
+    .donut-sublabel {
+        font-size: 0.65rem;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    .donut-legend {
+        display: flex;
+        justify-content: center;
+        gap: var(--space-lg);
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: var(--space-xs);
+        font-size: 0.78rem;
+        color: var(--text-secondary);
+    }
+
+    .legend-dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .bar-chart-wrapper {
+        height: 240px;
+    }
+
+    /* ---- History Table ---- */
+    .history-section {
+        margin-bottom: var(--space-xl);
+        padding: var(--space-xl);
+    }
+
+    .table-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: var(--space-lg);
+        flex-wrap: wrap;
+        gap: var(--space-md);
+    }
+
+    .table-header h3 {
+        font-size: 0.95rem;
+        font-weight: 700;
+    }
+
+    .history-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .history-table th {
+        text-align: left;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-tertiary);
+        padding: var(--space-sm) var(--space-md);
+        border-bottom: 1px solid var(--glass-border);
+    }
+
+    .history-table td {
+        padding: var(--space-md);
+        font-size: 0.875rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        vertical-align: middle;
+    }
+
+    .history-table tbody tr {
+        transition: background var(--transition-fast);
+    }
+
+    .history-table tbody tr:hover {
+        background: var(--glass-bg);
+    }
+
+    .history-table .font-mono {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+    }
+
+    .empty-table {
+        text-align: center;
+        padding: var(--space-3xl);
+        color: var(--text-tertiary);
+    }
+
+    .empty-table .empty-icon {
+        font-size: 2.5rem;
+        margin-bottom: var(--space-md);
+        opacity: 0.4;
+    }
+
+    .empty-table h3 {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: var(--space-sm);
+    }
+
+    .empty-table p {
+        font-size: 0.82rem;
+        line-height: 1.6;
+        max-width: 300px;
+        margin: 0 auto var(--space-lg);
+    }
+
+    /* ---- Quick Actions ---- */
+    .dashboard-actions {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--space-md);
+        margin-bottom: var(--space-4xl);
+    }
+
+    @media (max-width: 640px) {
+        .dashboard-actions { grid-template-columns: 1fr; }
+    }
+
+    .action-card {
+        padding: var(--space-xl);
+        text-align: center;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        transition: all var(--transition-base);
+    }
+
+    .action-card:hover {
+        transform: translateY(-4px);
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .action-icon {
+        font-size: 1.8rem;
+        margin-bottom: var(--space-md);
+    }
+
+    .action-card h4 {
+        font-size: 0.9rem;
+        font-weight: 700;
+        margin-bottom: var(--space-xs);
+    }
+
+    .action-card p {
+        font-size: 0.78rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <!-- Header -->
+    <div class="dashboard-hero reveal">
+        <div>
+            <div class="badge badge-accent mb-md">⬡ Analytics</div>
+            <h1>Dashboard</h1>
+            <p>Session analysis overview — analysis history resets on page refresh</p>
+        </div>
+        <div class="dashboard-sub" id="lastUpdated"></div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-row stagger-children" id="kpiRow" style="grid-template-columns:repeat(5,1fr);">
+        <div class="glass-card kpi-card total" data-tilt>
+            <div class="kpi-label">Total Analyses</div>
+            <div class="kpi-value" id="kpiTotal">0</div>
+            <div class="kpi-sub">This session</div>
+        </div>
+        <div class="glass-card kpi-card fraud" data-tilt>
+            <div class="kpi-label">Flagged Fraud</div>
+            <div class="kpi-value" id="kpiFraud">0</div>
+            <div class="kpi-sub">Above 40% threshold</div>
+        </div>
+        <div class="glass-card kpi-card genuine" data-tilt>
+            <div class="kpi-label">Genuine</div>
+            <div class="kpi-value" id="kpiGenuine">0</div>
+            <div class="kpi-sub">Below threshold</div>
+        </div>
+        <div class="glass-card kpi-card avg" data-tilt>
+            <div class="kpi-label">Avg Risk Score</div>
+            <div class="kpi-value" id="kpiAvgRisk">—</div>
+            <div class="kpi-sub">Composite (0–100)</div>
+        </div>
+        <div class="glass-card kpi-card" data-tilt style="border-top: 2px solid rgba(245,158,11,0.4);">
+            <div class="kpi-label">Highest Risk</div>
+            <div class="kpi-value" id="kpiMaxRisk" style="color:var(--color-warning);">—</div>
+            <div class="kpi-sub">Peak score</div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="charts-row">
+        <div class="glass-card no-hover chart-card reveal">
+            <div class="chart-title">
+                <span>Fraud Rate</span>
+                <span class="overline">Risk Split</span>
+            </div>
+            <div class="donut-wrapper">
+                <canvas id="fraudDonut" width="200" height="200"></canvas>
+                <div class="donut-center">
+                    <div class="donut-percent" id="donutPercent">—</div>
+                    <div class="donut-sublabel">Fraud Rate</div>
+                </div>
+            </div>
+            <div class="donut-legend">
+                <div class="legend-item"><div class="legend-dot" style="background: var(--color-danger);"></div> Fraud</div>
+                <div class="legend-item"><div class="legend-dot" style="background: var(--color-success);"></div> Genuine</div>
+            </div>
+        </div>
+
+        <div class="glass-card no-hover chart-card reveal" style="transition-delay: 0.1s;">
+            <div class="chart-title">
+                <span>Risk Score Distribution</span>
+                <span class="overline">Per Analysis</span>
+            </div>
+            <div class="bar-chart-wrapper">
+                <canvas id="riskBar" width="600" height="240"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Health Panel (below charts, full width) -->
+    <div class="glass-card no-hover reveal" style="padding:var(--space-lg);margin-bottom:var(--space-xl);" id="healthPanel">
+        <div style="text-align:center;color:var(--text-tertiary);font-size:0.82rem;padding:var(--space-md);">⏳ Loading system status...</div>
+    </div>
+
+    <!-- Analysis History Table -->
+    <div class="glass-card no-hover history-section reveal">
+        <div class="table-header">
+            <h3>Recent Analyses</h3>
+            <button id="clearHistoryBtn" class="btn btn-outline btn-sm" onclick="clearDashboard()">Clear History</button>
+        </div>
+        <div id="historyTableWrapper">
+            <div class="empty-table" id="emptyState">
+                <div class="empty-icon">📊</div>
+                <h3>No Analyses Yet</h3>
+                <p>Run your first loan application analysis to populate the dashboard with real data.</p>
+                <a href="/prediction" class="btn btn-primary btn-sm">Run Analysis →</a>
+            </div>
+            <table class="history-table" id="historyTable" style="display:none;">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Loan Type</th>
+                        <th>Amount</th>
+                        <th>Decision</th>
+                        <th>Fraud Prob.</th>
+                        <th>Risk Score</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="dashboard-actions stagger-children">
+        <a href="/prediction" class="glass-card action-card">
+            <div class="action-icon">🔍</div>
+            <h4>New Analysis</h4>
+            <p>Submit a fresh loan application through the full agent pipeline</p>
+        </a>
+        <a href="/advisor" class="glass-card action-card">
+            <div class="action-icon">💬</div>
+            <h4>AI Advisor</h4>
+            <p>Ask the advisory agent about risk drivers and recommended actions</p>
+        </a>
+        <a href="/agents" class="glass-card action-card">
+            <div class="action-icon">⬡</div>
+            <h4>Agent Architecture</h4>
+            <p>Explore how Detection, Analytics, and Advisory agents coordinate</p>
+        </a>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ---- Dashboard State (localStorage) ----
+const STORAGE_KEY = 'risksense_dashboard';
+
+function getDashboardData() {
+    try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{"analyses": []}');
+    } catch {
+        return { analyses: [] };
+    }
+}
+
+function saveDashboardData(data) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function clearDashboard() {
+    localStorage.removeItem(STORAGE_KEY);
+    renderDashboard();
+    if (window.showToast) showToast('History cleared', 'info');
+}
+
+// ---- Render ----
+let donutChart = null;
+let barChart = null;
+
+function renderDashboard() {
+    const data = getDashboardData();
+    const analyses = data.analyses || [];
+
+    // KPIs
+    const total = analyses.length;
+    const fraudCount = analyses.filter(a => a.is_fraud).length;
+    const genuineCount = total - fraudCount;
+    const avgRisk = total > 0
+        ? Math.round(analyses.reduce((s, a) => s + (a.risk_score || 0), 0) / total)
+        : null;
+
+    const maxRisk = total > 0 ? Math.max(...analyses.map(a => a.risk_score || 0)) : null;
+
+    document.getElementById('kpiTotal').textContent = total;
+    document.getElementById('kpiFraud').textContent = fraudCount;
+    document.getElementById('kpiGenuine').textContent = genuineCount;
+    document.getElementById('kpiAvgRisk').textContent = avgRisk !== null ? avgRisk : '—';
+    const maxEl = document.getElementById('kpiMaxRisk');
+    if (maxEl) maxEl.textContent = maxRisk !== null ? maxRisk + '/100' : '—';
+
+    const fraudRate = total > 0 ? Math.round((fraudCount / total) * 100) : 0;
+    document.getElementById('donutPercent').textContent = total > 0 ? fraudRate + '%' : '—';
+
+    // Last updated
+    if (total > 0) {
+        const last = analyses[analyses.length - 1];
+        document.getElementById('lastUpdated').textContent = 'Last: ' + (last.time || '');
+    }
+
+    // Timeline chart
+    const timelineSection = document.getElementById('timelineSection');
+    if (timelineSection) {
+        timelineSection.style.display = total > 0 ? 'block' : 'none';
+        if (total > 0) renderTimeline(analyses);
+    }
+
+    // Donut Chart
+    const donutCtx = document.getElementById('fraudDonut').getContext('2d');
+    if (donutChart) donutChart.destroy();
+
+    const hasData = total > 0;
+    donutChart = new Chart(donutCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Fraud', 'Genuine'],
+            datasets: [{
+                data: hasData ? [fraudCount, genuineCount] : [1, 1],
+                backgroundColor: hasData
+                    ? ['rgba(239, 68, 68, 0.75)', 'rgba(16, 185, 129, 0.75)']
+                    : ['rgba(255,255,255,0.06)', 'rgba(255,255,255,0.03)'],
+                borderColor: 'transparent',
+                borderWidth: 0,
+                hoverOffset: 4,
+            }]
+        },
+        options: {
+            cutout: '72%',
+            plugins: { legend: { display: false }, tooltip: { enabled: hasData } },
+            animation: { animateRotate: true, duration: 700 }
+        }
+    });
+
+    // Bar Chart
+    const barCtx = document.getElementById('riskBar').getContext('2d');
+    if (barChart) barChart.destroy();
+
+    const labels = analyses.map((_, i) => '#' + (i + 1));
+    const scores = analyses.map(a => a.risk_score || 0);
+    const barColors = analyses.map(a => a.is_fraud
+        ? 'rgba(239, 68, 68, 0.7)'
+        : 'rgba(16, 185, 129, 0.7)');
+
+    barChart = new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: labels.length > 0 ? labels : ['No data yet'],
+            datasets: [{
+                label: 'Risk Score',
+                data: scores.length > 0 ? scores : [0],
+                backgroundColor: barColors.length > 0 ? barColors : ['rgba(255,255,255,0.06)'],
+                borderRadius: 4,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    min: 0, max: 100,
+                    grid: { color: 'rgba(255,255,255,0.04)' },
+                    ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 10 } }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 10 } }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ' Risk Score: ' + ctx.raw + '/100'
+                    }
+                }
+            },
+            animation: { duration: 600 }
+        }
+    });
+
+    // Table
+    const emptyState = document.getElementById('emptyState');
+    const historyTable = document.getElementById('historyTable');
+    const tbody = document.getElementById('historyTbody');
+
+    if (total === 0) {
+        emptyState.style.display = 'block';
+        historyTable.style.display = 'none';
+    } else {
+        emptyState.style.display = 'none';
+        historyTable.style.display = 'table';
+        tbody.innerHTML = [...analyses].reverse().slice(0, 15).map((a, i) => `
+            <tr>
+                <td class="font-mono">#${analyses.length - i}</td>
+                <td>${a.loan_type || '—'}</td>
+                <td class="font-mono">$${Number(a.loan_amount || 0).toLocaleString()}</td>
+                <td><span class="badge ${a.is_fraud ? 'badge-danger' : 'badge-success'}">${a.decision || (a.is_fraud ? 'FRAUD' : 'GENUINE')}</span></td>
+                <td class="font-mono">${a.probability != null ? (a.probability * 100).toFixed(1) + '%' : '—'}</td>
+                <td>
+                    <span class="badge ${(a.risk_score >= 70) ? 'badge-danger' : (a.risk_score >= 45) ? 'badge-warning' : 'badge-success'}">
+                        ${a.risk_score != null ? a.risk_score + '/100' : '—'}
+                    </span>
+                </td>
+                <td class="font-mono" style="color: var(--text-tertiary); font-size: 0.75rem;">${a.time || ''}</td>
+            </tr>
+        `).join('');
+    }
+}
+
+// ---- Risk Score Timeline Chart ----
+let timelineChart = null;
+function renderTimeline(analyses) {
+    const ctx = document.getElementById('riskTimelineChart');
+    if (!ctx) return;
+    if (analyses.length === 0) { ctx.parentElement.style.display = 'none'; return; }
+    ctx.parentElement.style.display = 'block';
+
+    const labels = analyses.slice(-20).map((a, i) => '#' + (i+1));
+    const scores = analyses.slice(-20).map(a => a.risk_score || 0);
+    const colors = scores.map(s => s >= 70 ? 'rgba(239,68,68,0.8)' : s >= 45 ? 'rgba(245,158,11,0.8)' : 'rgba(16,185,129,0.8)');
+
+    if (timelineChart) timelineChart.destroy();
+    timelineChart = new Chart(ctx.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Risk Score',
+                data: scores,
+                borderColor: 'rgba(124,58,237,0.7)',
+                backgroundColor: 'rgba(124,58,237,0.08)',
+                pointBackgroundColor: colors,
+                pointBorderColor: colors,
+                pointRadius: 5,
+                fill: true,
+                tension: 0.4,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: {
+                x: { grid: { display: false }, ticks: { color: 'rgba(255,255,255,0.35)', font: { size: 9 } } },
+                y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: 'rgba(255,255,255,0.35)', font: { size: 9 } } }
+            },
+            plugins: { legend: { display: false } },
+            animation: { duration: 700 }
+        }
+    });
+}
+
+// ---- System Health Panel ----
+async function loadSystemHealth() {
+    const panel = document.getElementById('healthPanel');
+    if (!panel) return;
+    try {
+        const res = await fetch('/api/health');
+        const data = await res.json();
+        panel.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-md);">
+                <div style="font-size:0.85rem;font-weight:700;">System Status</div>
+                <span class="badge badge-success" style="font-size:0.68rem;">● Online</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-sm);">
+                ${[
+                    ['Model', data.model?.type || '—'],
+                    ['Features', data.model?.n_features || '—'],
+                    ['Dataset', (data.dataset?.records || 0).toLocaleString() + ' rows'],
+                    ['Threshold', data.model?.threshold_range || '—'],
+                    ['Detection', '● ' + (data.agents?.detection || 'online')],
+                    ['Advisory', '● ' + (data.agents?.advisory || 'online')],
+                ].map(([k,v]) => `
+                    <div style="padding:var(--space-sm);background:var(--glass-bg);border-radius:var(--radius-sm);">
+                        <div style="font-size:0.65rem;color:var(--text-tertiary);font-weight:600;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px;">${k}</div>
+                        <div style="font-size:0.8rem;font-weight:600;color:var(--color-success);">${v}</div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    } catch(e) {
+        panel.innerHTML = '<div style="color:var(--text-tertiary);font-size:0.82rem;text-align:center;padding:1rem;">Could not load system status</div>';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    renderDashboard();
+    loadSystemHealth();
+    // Listen for storage updates from prediction page
+    window.addEventListener('storage', () => renderDashboard());
+});
+</script>
+
+<!-- Risk Timeline Chart Section -->
+<div class="container" style="margin-top: var(--space-xl); margin-bottom: var(--space-xl);">
+    <div class="glass-card no-hover" style="padding: var(--space-xl); display:none;" id="timelineSection">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-lg);">
+            <div>
+                <div style="font-size:0.72rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-tertiary);margin-bottom:4px;">Live Monitoring</div>
+                <div style="font-size:0.95rem;font-weight:700;">Risk Score Timeline</div>
+            </div>
+            <div style="display:flex;gap:var(--space-sm);">
+                <span style="display:flex;align-items:center;gap:4px;font-size:0.72rem;color:var(--color-danger);">● High Risk</span>
+                <span style="display:flex;align-items:center;gap:4px;font-size:0.72rem;color:var(--color-warning);">● Medium</span>
+                <span style="display:flex;align-items:center;gap:4px;font-size:0.72rem;color:var(--color-success);">● Low Risk</span>
+            </div>
+        </div>
+        <div style="height: 180px; position:relative;">
+            <canvas id="riskTimelineChart"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}RiskSense AI — Portfolio Analyzer{% endblock %}
+
+{% block head %}
+<style>
+    .portfolio-hero { text-align: center; padding: var(--space-3xl) 0 var(--space-2xl); }
+    .portfolio-hero h1 { font-size: clamp(1.75rem,4vw,2.5rem); font-weight: 900; letter-spacing: -0.03em; margin-bottom: var(--space-sm); }
+    .portfolio-hero p { color: var(--text-secondary); }
+
+    .portfolio-layout { display: grid; grid-template-columns: 1fr 1.5fr; gap: var(--space-xl); margin-bottom: var(--space-xl); }
+    @media (max-width: 900px) { .portfolio-layout { grid-template-columns: 1fr; } }
+
+    /* Input Card */
+    .portfolio-input { padding: var(--space-xl); }
+    .portfolio-input h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: var(--space-lg); }
+    .add-entry-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-sm); margin-bottom: var(--space-md); }
+    @media (max-width: 500px) { .add-entry-grid { grid-template-columns: 1fr; } }
+    .portfolio-entries { max-height: 280px; overflow-y: auto; margin-bottom: var(--space-md); }
+    .portfolio-entry {
+        display: flex; align-items: center; gap: var(--space-sm);
+        padding: var(--space-sm) var(--space-md);
+        background: var(--glass-bg); border-radius: var(--radius-sm);
+        border: 1px solid var(--glass-border); margin-bottom: var(--space-xs);
+        font-size: 0.82rem;
+    }
+    .portfolio-entry .entry-info { flex: 1; }
+    .portfolio-entry .entry-type { font-weight: 600; }
+    .portfolio-entry .entry-amount { color: var(--text-secondary); font-size: 0.75rem; }
+    .entry-remove { background: none; border: none; color: var(--text-tertiary); cursor: pointer; font-size: 0.9rem; padding: 2px 6px; border-radius: 4px; transition: all var(--transition-fast); }
+    .entry-remove:hover { color: var(--color-danger); background: var(--color-danger-bg); }
+
+    .upload-portfolio-zone {
+        border: 2px dashed var(--glass-border); border-radius: var(--radius-md);
+        padding: var(--space-xl); text-align: center; cursor: pointer; position: relative;
+        transition: all var(--transition-base); margin-bottom: var(--space-md);
+        background: var(--glass-bg);
+    }
+    .upload-portfolio-zone:hover { border-color: rgba(124,58,237,0.4); }
+    #portfolioCsvInput { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+    /* Charts Area */
+    .portfolio-charts { padding: var(--space-xl); }
+    .portfolio-charts h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: var(--space-xl); }
+    .portfolio-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); margin-bottom: var(--space-xl); }
+    .p-kpi { padding: var(--space-lg); text-align: center; }
+    .p-kpi-label { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); margin-bottom: 4px; }
+    .p-kpi-value { font-size: 1.5rem; font-weight: 900; font-family: var(--font-mono); }
+
+    .charts-duo { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg); margin-bottom: var(--space-lg); }
+    @media (max-width: 600px) { .charts-duo { grid-template-columns: 1fr; } }
+    .chart-panel { padding: var(--space-lg); }
+    .chart-panel-title { font-size: 0.82rem; font-weight: 600; margin-bottom: var(--space-md); color: var(--text-secondary); }
+
+    .risk-breakdown-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .risk-breakdown-table th { text-align: left; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); padding: var(--space-xs) var(--space-sm); border-bottom: 1px solid var(--glass-border); }
+    .risk-breakdown-table td { padding: var(--space-xs) var(--space-sm); border-bottom: 1px solid rgba(255,255,255,0.03); }
+
+    .portfolio-empty { text-align: center; padding: var(--space-3xl); color: var(--text-tertiary); }
+    .portfolio-empty .icon { font-size: 2.5rem; opacity: 0.4; margin-bottom: var(--space-md); }
+
+    .analyze-btn { width: 100%; margin-top: var(--space-md); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <div class="portfolio-hero reveal">
+        <div class="badge badge-accent mb-md">⬡ Portfolio</div>
+        <h1>Portfolio Risk Analyzer</h1>
+        <p>Aggregate risk assessment across your entire loan portfolio</p>
+    </div>
+
+    <div class="portfolio-layout">
+        <!-- Input Panel -->
+        <div class="glass-card no-hover portfolio-input reveal">
+            <h3>📋 Build Your Portfolio</h3>
+
+            <!-- CSV Upload -->
+            <div class="upload-portfolio-zone" id="portfolioUploadZone">
+                <input type="file" id="portfolioCsvInput" accept=".csv">
+                <div style="font-size:1.5rem;margin-bottom:var(--space-sm);">📁</div>
+                <div style="font-size:0.82rem;color:var(--text-secondary);">Drop a batch CSV or <span style="color:var(--accent-tertiary);">browse</span></div>
+            </div>
+
+            <div style="text-align:center;font-size:0.78rem;color:var(--text-tertiary);margin-bottom:var(--space-md);">— or add manually —</div>
+
+            <!-- Manual Entry -->
+            <div class="add-entry-grid">
+                <select id="pLoanType" class="form-select" style="font-size:0.82rem;">
+                    <option>Home Loan</option>
+                    <option>Personal Loan</option>
+                    <option>Car Loan</option>
+                    <option>Education Loan</option>
+                    <option>Business Loan</option>
+                </select>
+                <input type="number" id="pLoanAmount" class="form-input" placeholder="Amount ($)" style="font-size:0.82rem;">
+                <input type="number" id="pCibil" class="form-input" placeholder="CIBIL score" style="font-size:0.82rem;">
+                <input type="number" id="pDti" class="form-input" placeholder="DTI (0–1)" step="0.01" style="font-size:0.82rem;">
+            </div>
+            <button class="btn btn-secondary btn-sm" id="addEntryBtn" style="width:100%;margin-bottom:var(--space-md);">+ Add Entry</button>
+
+            <div style="font-size:0.78rem;font-weight:600;color:var(--text-tertiary);margin-bottom:var(--space-sm);">PORTFOLIO ENTRIES (<span id="entryCount">0</span>)</div>
+            <div class="portfolio-entries" id="portfolioEntries">
+                <div style="text-align:center;padding:var(--space-xl);color:var(--text-tertiary);font-size:0.82rem;">No entries yet</div>
+            </div>
+
+            <button class="btn btn-primary analyze-btn" id="analyzePortfolioBtn">🔍 Analyze Portfolio</button>
+            <button class="btn btn-outline btn-sm analyze-btn" style="margin-top:var(--space-sm);" id="loadSamplePortfolioBtn">🎲 Load Sample Portfolio</button>
+        </div>
+
+        <!-- Results Area -->
+        <div class="glass-card no-hover portfolio-charts reveal" style="transition-delay:0.1s;" id="portfolioResults">
+            <div class="portfolio-empty" id="portfolioEmpty">
+                <div class="icon">📈</div>
+                <div style="font-size:0.9rem;font-weight:600;color:var(--text-secondary);margin-bottom:var(--space-sm);">Add loan entries to analyze</div>
+                <div style="font-size:0.82rem;">Add applications or upload a CSV to see your portfolio's aggregate risk breakdown</div>
+            </div>
+
+            <div id="portfolioAnalysisResults" style="display:none;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-xl);">
+                    <h3 style="font-size:0.95rem;font-weight:700;">Portfolio Analysis</h3>
+                    <button class="btn btn-outline btn-sm" id="exportPortfolioBtn">⬇ Export Report</button>
+                </div>
+
+                <!-- KPIs -->
+                <div class="portfolio-kpis">
+                    <div class="glass-card p-kpi">
+                        <div class="p-kpi-label">Portfolio Value</div>
+                        <div class="p-kpi-value" id="pkpiValue" style="color:var(--accent-tertiary);">$0</div>
+                    </div>
+                    <div class="glass-card p-kpi">
+                        <div class="p-kpi-label">Fraud Exposure</div>
+                        <div class="p-kpi-value" id="pkpiExposure" style="color:var(--color-danger);">$0</div>
+                    </div>
+                    <div class="glass-card p-kpi">
+                        <div class="p-kpi-label">Fraud Rate</div>
+                        <div class="p-kpi-value" id="pkpiFraudRate" style="color:var(--color-warning);">0%</div>
+                    </div>
+                    <div class="glass-card p-kpi">
+                        <div class="p-kpi-label">Avg Risk Score</div>
+                        <div class="p-kpi-value" id="pkpiAvgRisk">0</div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="charts-duo">
+                    <div class="glass-card no-hover chart-panel">
+                        <div class="chart-panel-title">Risk Distribution</div>
+                        <canvas id="portfolioDonut" height="160"></canvas>
+                    </div>
+                    <div class="glass-card no-hover chart-panel">
+                        <div class="chart-panel-title">Loan Type Breakdown</div>
+                        <canvas id="portfolioTypeBar" height="160"></canvas>
+                    </div>
+                </div>
+
+                <!-- Breakdown Table -->
+                <div class="glass-card no-hover" style="padding:var(--space-lg);">
+                    <div style="font-size:0.82rem;font-weight:600;margin-bottom:var(--space-md);">Risk Segment Breakdown</div>
+                    <table class="risk-breakdown-table">
+                        <thead><tr><th>Segment</th><th>Count</th><th>%</th><th>Exposure</th></tr></thead>
+                        <tbody id="portfolioBreakdown"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/portfolio.js') }}"></script>
+{% endblock %}

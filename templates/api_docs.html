@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+{% block title %}RiskSense AI — API Documentation{% endblock %}
+
+{% block head %}
+<style>
+    .api-hero { padding: var(--space-3xl) 0 var(--space-2xl); }
+    .api-hero h1 { font-size: clamp(1.75rem,4vw,2.5rem); font-weight: 900; letter-spacing: -0.03em; margin-bottom: var(--space-sm); }
+    .api-hero p { color: var(--text-secondary); }
+
+    .api-layout { display: grid; grid-template-columns: 240px 1fr; gap: var(--space-xl); margin-bottom: var(--space-4xl); }
+    @media (max-width: 900px) { .api-layout { grid-template-columns: 1fr; } }
+
+    /* Sidebar Nav */
+    .api-nav { position: sticky; top: 80px; align-self: start; padding: var(--space-lg); }
+    .api-nav-title { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); margin-bottom: var(--space-md); }
+    .api-nav a {
+        display: block; padding: var(--space-sm) var(--space-md); border-radius: var(--radius-sm);
+        color: var(--text-secondary); text-decoration: none; font-size: 0.85rem;
+        transition: all var(--transition-fast); margin-bottom: 2px;
+    }
+    .api-nav a:hover, .api-nav a.active { background: rgba(124,58,237,0.1); color: var(--text-primary); }
+    .api-nav a .method-pill { font-size: 0.65rem; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-right: 6px; }
+    .post-pill { background: rgba(124,58,237,0.2); color: #a78bfa; }
+    .get-pill { background: rgba(16,185,129,0.2); color: var(--color-success); }
+
+    /* Endpoint Cards */
+    .api-endpoints { display: flex; flex-direction: column; gap: var(--space-xl); }
+    .endpoint-card { padding: var(--space-xl); scroll-margin-top: 80px; }
+    .endpoint-header { display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-lg); flex-wrap: wrap; }
+    .method-badge {
+        padding: 4px 12px; border-radius: 6px; font-size: 0.78rem; font-weight: 800;
+        font-family: var(--font-mono); letter-spacing: 0.05em;
+    }
+    .method-badge.POST { background: rgba(124,58,237,0.2); color: #a78bfa; border: 1px solid rgba(124,58,237,0.3); }
+    .method-badge.GET { background: rgba(16,185,129,0.2); color: var(--color-success); border: 1px solid rgba(16,185,129,0.3); }
+    .endpoint-path { font-family: var(--font-mono); font-size: 1rem; font-weight: 700; color: var(--text-primary); }
+    .endpoint-desc { font-size: 0.875rem; color: var(--text-secondary); margin-bottom: var(--space-lg); line-height: 1.6; }
+
+    .schema-section { margin-bottom: var(--space-xl); }
+    .schema-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); margin-bottom: var(--space-sm); }
+    .code-block {
+        background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border);
+        border-radius: var(--radius-md); padding: var(--space-lg);
+        font-family: var(--font-mono); font-size: 0.8rem; color: #a9c5f8;
+        overflow-x: auto; white-space: pre; position: relative;
+        line-height: 1.6;
+    }
+    .code-block .copy-btn {
+        position: absolute; top: var(--space-sm); right: var(--space-sm);
+        font-size: 0.7rem; padding: 2px 8px; background: rgba(124,58,237,0.2);
+        border: 1px solid rgba(124,58,237,0.3); border-radius: 4px; color: #a78bfa;
+        cursor: pointer; font-family: var(--font-sans); transition: all var(--transition-fast);
+    }
+    .code-block .copy-btn:hover { background: rgba(124,58,237,0.4); }
+
+    .param-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: var(--space-sm); }
+    .param-table th { text-align: left; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); padding: var(--space-xs) var(--space-sm); border-bottom: 1px solid var(--glass-border); }
+    .param-table td { padding: var(--space-sm); border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: top; }
+    .param-name { font-family: var(--font-mono); color: var(--accent-tertiary); font-size: 0.78rem; }
+    .param-type { font-family: var(--font-mono); color: var(--color-warning); font-size: 0.72rem; }
+    .param-required { color: var(--color-danger); font-size: 0.7rem; font-weight: 700; }
+
+    /* Try It Panel */
+    .try-it-panel { background: rgba(124,58,237,0.05); border: 1px solid rgba(124,58,237,0.15); border-radius: var(--radius-md); padding: var(--space-lg); }
+    .try-it-label { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(124,58,237,0.8); margin-bottom: var(--space-md); }
+    .try-it-textarea { width: 100%; min-height: 120px; padding: var(--space-md); background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: var(--radius-sm); color: #a9c5f8; font-family: var(--font-mono); font-size: 0.78rem; resize: none; margin-bottom: var(--space-md); }
+    .try-it-textarea:focus { outline: none; border-color: rgba(124,58,237,0.4); }
+    .try-it-response { display: none; margin-top: var(--space-md); }
+    .try-it-response.show { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <div class="api-hero reveal">
+        <div class="badge badge-accent mb-md">⬡ Developer</div>
+        <h1>API Documentation</h1>
+        <p>REST API reference for RiskSense AI — integrate fraud detection into your systems</p>
+    </div>
+
+    <div class="api-layout">
+
+        <!-- Sidebar Navigation -->
+        <div class="glass-card no-hover api-nav reveal">
+            <div class="api-nav-title">Endpoints</div>
+            <a href="#api-analyze"><span class="method-pill post-pill">POST</span>/api/analyze</a>
+            <a href="#api-batch"><span class="method-pill post-pill">POST</span>/api/batch</a>
+            <a href="#api-chat"><span class="method-pill post-pill">POST</span>/api/chat</a>
+            <a href="#api-dataset"><span class="method-pill get-pill">GET</span>/api/dataset/random</a>
+            <a href="#api-health"><span class="method-pill get-pill">GET</span>/api/health</a>
+            <div class="api-nav-title" style="margin-top:var(--space-lg);">Guides</div>
+            <a href="#authentication">🔑 Authentication</a>
+            <a href="#rate-limiting">⏱ Rate Limiting</a>
+            <a href="#errors">❌ Error Codes</a>
+        </div>
+
+        <!-- Endpoints -->
+        <div class="api-endpoints">
+
+            <!-- POST /api/analyze -->
+            <div class="glass-card no-hover endpoint-card reveal" id="api-analyze">
+                <div class="endpoint-header">
+                    <span class="method-badge POST">POST</span>
+                    <span class="endpoint-path">/api/analyze</span>
+                </div>
+                <p class="endpoint-desc">Runs the full 3-agent pipeline (Detection → Analytics → Advisory) on a single loan application. Returns fraud probability, composite risk score, risk signals, and advisory actions.</p>
+
+                <div class="schema-section">
+                    <div class="schema-label">Request Body</div>
+                    <table class="param-table">
+                        <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td class="param-name">loan_type</td><td class="param-type">string</td><td class="param-required">Yes</td><td>e.g. "Home Loan", "Personal Loan"</td></tr>
+                            <tr><td class="param-name">loan_amount</td><td class="param-type">number</td><td class="param-required">Yes</td><td>Requested loan amount in currency units</td></tr>
+                            <tr><td class="param-name">tenure</td><td class="param-type">integer</td><td class="param-required">Yes</td><td>Loan tenure in months</td></tr>
+                            <tr><td class="param-name">interest</td><td class="param-type">decimal</td><td class="param-required">Yes</td><td>Interest rate in % (e.g. 12.5)</td></tr>
+                            <tr><td class="param-name">purpose</td><td class="param-type">string</td><td class="param-required">Yes</td><td>Purpose of loan</td></tr>
+                            <tr><td class="param-name">employment</td><td class="param-type">string</td><td class="param-required">No</td><td>Employment status</td></tr>
+                            <tr><td class="param-name">income</td><td class="param-type">number</td><td class="param-required">No</td><td>Monthly income</td></tr>
+                            <tr><td class="param-name">cibil</td><td class="param-type">integer</td><td class="param-required">No</td><td>CIBIL credit score (300–900)</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="schema-section">
+                    <div class="schema-label">Example Request</div>
+                    <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button>{
+  "loan_type": "Business Loan",
+  "loan_amount": 2500000,
+  "tenure": 48,
+  "interest": 14.5,
+  "purpose": "Business Expansion",
+  "employment": "Self-Employed",
+  "income": 85000,
+  "cibil": 620,
+  "emis": 15000,
+  "dti": 0.58,
+  "age": 38,
+  "gender": "Male",
+  "dependents": 2,
+  "property": "Rented"
+}</div>
+                </div>
+
+                <div class="schema-section">
+                    <div class="schema-label">Example Response</div>
+                    <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button>{
+  "platform": "RiskSense AI: Agentic Banking Fraud Analytics...",
+  "timestamp": "2026-08-02 14:00 UTC",
+  "prediction": {
+    "label": "FRAUD 🚨",
+    "probability": 0.673,
+    "is_fraud": true
+  },
+  "analytics": {
+    "risk_score": 82,
+    "risk_level": "Critical",
+    "signals": [
+      { "factor": "CIBIL Score", "severity": "medium", "detail": "Score 620 is moderate" },
+      { "factor": "Debt-to-Income", "severity": "high", "detail": "DTI 0.58 exceeds limit" }
+    ]
+  },
+  "advisory": {
+    "decision": "BLOCK &amp; ESCALATE",
+    "items": [
+      { "priority": "P0", "action": "Freeze application workflow", "rationale": "..." }
+    ]
+  },
+  "executive_summary": "BLOCK &amp; ESCALATE — FRAUD 🚨 at 67.30% fraud probability."
+}</div>
+                </div>
+
+                <!-- Try It -->
+                <div class="try-it-panel">
+                    <div class="try-it-label">⚡ Try It Live</div>
+                    <textarea class="try-it-textarea" id="analyzeInput">{
+  "loan_type": "Personal Loan",
+  "loan_amount": 500000,
+  "tenure": 36,
+  "interest": 13.5,
+  "purpose": "Debt Consolidation",
+  "employment": "Salaried",
+  "income": 45000,
+  "cibil": 550,
+  "emis": 8000,
+  "dti": 0.62,
+  "age": 29,
+  "gender": "Female",
+  "dependents": 1,
+  "property": "Rented"
+}</textarea>
+                    <button class="btn btn-primary btn-sm" onclick="tryApi('/api/analyze', 'analyzeInput', 'analyzeOutput')">▶ Send Request</button>
+                    <div class="try-it-response" id="analyzeOutput">
+                        <div class="schema-label" style="margin-top:var(--space-md);">Response</div>
+                        <div class="code-block" style="color:#7ee8a2;" id="analyzeOutputContent"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- POST /api/batch -->
+            <div class="glass-card no-hover endpoint-card reveal" id="api-batch">
+                <div class="endpoint-header">
+                    <span class="method-badge POST">POST</span>
+                    <span class="endpoint-path">/api/batch</span>
+                </div>
+                <p class="endpoint-desc">Process up to 500 loan applications in a single request. Returns aggregate statistics plus per-row results. Ideal for portfolio screening.</p>
+                <div class="schema-section">
+                    <div class="schema-label">Example Request</div>
+                    <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button>{
+  "applications": [
+    { "loan_type": "Home Loan", "loan_amount": 5000000, "tenure": 240, "interest": 8.5, "purpose": "Home Renovation" },
+    { "loan_type": "Personal Loan", "loan_amount": 200000, "tenure": 24, "interest": 16.0, "purpose": "Wedding" }
+  ]
+}</div>
+                </div>
+                <div class="schema-section">
+                    <div class="schema-label">Response Summary Fields</div>
+                    <table class="param-table">
+                        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td class="param-name">total</td><td class="param-type">integer</td><td>Total applications processed</td></tr>
+                            <tr><td class="param-name">fraud_count</td><td class="param-type">integer</td><td>Number flagged as fraud</td></tr>
+                            <tr><td class="param-name">fraud_rate</td><td class="param-type">decimal</td><td>Fraud percentage (0–100)</td></tr>
+                            <tr><td class="param-name">total_portfolio_value</td><td class="param-type">number</td><td>Sum of all loan amounts</td></tr>
+                            <tr><td class="param-name">estimated_fraud_exposure</td><td class="param-type">number</td><td>Estimated fraud-linked portfolio value</td></tr>
+                            <tr><td class="param-name">results</td><td class="param-type">array</td><td>Per-row results</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- POST /api/chat -->
+            <div class="glass-card no-hover endpoint-card reveal" id="api-chat">
+                <div class="endpoint-header">
+                    <span class="method-badge POST">POST</span>
+                    <span class="endpoint-path">/api/chat</span>
+                </div>
+                <p class="endpoint-desc">AI Advisor conversational endpoint. Send a message and optionally attach application context for context-aware responses.</p>
+                <div class="schema-section">
+                    <div class="schema-label">Example Request</div>
+                    <div class="code-block"><button class="copy-btn" onclick="copyCode(this)">Copy</button>{
+  "message": "Why is this application flagged as high risk?",
+  "application_data": {
+    "loan_type": "Personal Loan",
+    "cibil": 480, "dti": 0.72, "income": 25000
+  }
+}</div>
+                </div>
+                <div class="try-it-panel">
+                    <div class="try-it-label">⚡ Try It Live</div>
+                    <textarea class="try-it-textarea" id="chatInput">{"message": "How does the fraud scoring work?"}</textarea>
+                    <button class="btn btn-primary btn-sm" onclick="tryApi('/api/chat', 'chatInput', 'chatOutput')">▶ Send Request</button>
+                    <div class="try-it-response" id="chatOutput">
+                        <div class="schema-label" style="margin-top:var(--space-md);">Response</div>
+                        <div class="code-block" style="color:#7ee8a2;" id="chatOutputContent"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GET /api/dataset/random -->
+            <div class="glass-card no-hover endpoint-card reveal" id="api-dataset">
+                <div class="endpoint-header">
+                    <span class="method-badge GET">GET</span>
+                    <span class="endpoint-path">/api/dataset/random</span>
+                </div>
+                <p class="endpoint-desc">Returns a random record from the training dataset formatted as form fields. Useful for testing with real-world data.</p>
+                <div class="try-it-panel">
+                    <div class="try-it-label">⚡ Try It Live</div>
+                    <button class="btn btn-primary btn-sm" onclick="tryGetApi('/api/dataset/random', 'datasetOutput')">▶ Send Request</button>
+                    <div class="try-it-response" id="datasetOutput">
+                        <div class="schema-label" style="margin-top:var(--space-md);">Response</div>
+                        <div class="code-block" style="color:#7ee8a2;" id="datasetOutputContent"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GET /api/health -->
+            <div class="glass-card no-hover endpoint-card reveal" id="api-health">
+                <div class="endpoint-header">
+                    <span class="method-badge GET">GET</span>
+                    <span class="endpoint-path">/api/health</span>
+                </div>
+                <p class="endpoint-desc">Returns platform health status, model information, dataset statistics, and agent online status.</p>
+                <div class="try-it-panel">
+                    <div class="try-it-label">⚡ Try It Live</div>
+                    <button class="btn btn-primary btn-sm" onclick="tryGetApi('/api/health', 'healthOutput')">▶ Send Request</button>
+                    <div class="try-it-response" id="healthOutput">
+                        <div class="schema-label" style="margin-top:var(--space-md);">Response</div>
+                        <div class="code-block" style="color:#7ee8a2;" id="healthOutputContent"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Auth / Info Cards -->
+            <div class="glass-card no-hover endpoint-card reveal" id="authentication">
+                <h3 style="font-size:1rem;font-weight:700;margin-bottom:var(--space-md);">🔑 Authentication</h3>
+                <p class="endpoint-desc">RiskSense AI currently runs in <strong>open mode</strong> — no API key is required. All endpoints are accessible without authentication headers. For production deployments, implement JWT or API key middleware.</p>
+            </div>
+
+            <div class="glass-card no-hover endpoint-card reveal" id="errors">
+                <h3 style="font-size:1rem;font-weight:700;margin-bottom:var(--space-md);">❌ Error Codes</h3>
+                <table class="param-table">
+                    <thead><tr><th>Code</th><th>Meaning</th></tr></thead>
+                    <tbody>
+                        <tr><td class="param-name">400</td><td>Bad Request — missing or invalid fields</td></tr>
+                        <tr><td class="param-name">404</td><td>Endpoint not found</td></tr>
+                        <tr><td class="param-name">500</td><td>Internal server error — pipeline or model failure</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copyCode(btn) {
+    const block = btn.parentElement;
+    const text = block.textContent.replace('Copy', '').trim();
+    navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 1500);
+    }).catch(() => {});
+}
+
+async function tryApi(endpoint, inputId, outputId) {
+    const inputEl = document.getElementById(inputId);
+    const outputEl = document.getElementById(outputId);
+    const contentEl = document.getElementById(outputId + 'Content');
+    if (!inputEl || !outputEl || !contentEl) return;
+    try {
+        const body = JSON.parse(inputEl.value);
+        contentEl.textContent = 'Loading...';
+        outputEl.classList.add('show');
+        const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        contentEl.textContent = JSON.stringify(data, null, 2);
+    } catch(e) {
+        contentEl.textContent = 'Error: ' + e.message;
+    }
+}
+
+async function tryGetApi(endpoint, outputId) {
+    const outputEl = document.getElementById(outputId);
+    const contentEl = document.getElementById(outputId + 'Content');
+    if (!outputEl || !contentEl) return;
+    try {
+        contentEl.textContent = 'Loading...';
+        outputEl.classList.add('show');
+        const res = await fetch(endpoint);
+        const data = await res.json();
+        contentEl.textContent = JSON.stringify(data, null, 2);
+    } catch(e) {
+        contentEl.textContent = 'Error: ' + e.message;
+    }
+}
+</script>
+{% endblock %}

@@ -1,666 +1,665 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loan Fraud Prediction - SecureLoan</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-color: #1a4f72;
-            --secondary-color: #2c7da0;
-            --accent-color: #468faf;
-            --light-color: #89c2d9;
-            --success-color: #52b788;
-            --warning-color: #f4a261;
-            --danger-color: #e63946;
-            --light-bg: #f8f9fa;
-            --dark-text: #212529;
-            --light-text: #6c757d;
-            --white: #ffffff;
-            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --shadow-hover: 0 10px 15px rgba(0, 0, 0, 0.1);
+{% extends "base.html" %}
+{% block title %}RiskSense AI — Fraud Analysis{% endblock %}
+
+{% block head %}
+<style>
+    .prediction-header {
+        text-align: center;
+        padding: var(--space-xl) 0 var(--space-2xl);
+    }
+
+    .prediction-header h1 {
+        font-size: clamp(1.75rem, 4vw, 2.5rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        margin-bottom: var(--space-sm);
+    }
+
+    .prediction-header p {
+        color: var(--text-secondary);
+        font-size: 1rem;
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+        display: flex;
+        gap: var(--space-md);
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-bottom: var(--space-2xl);
+    }
+
+    .quick-action-card {
+        padding: var(--space-lg) var(--space-xl);
+        text-align: center;
+        min-width: 220px;
+        max-width: 300px;
+        flex: 1;
+    }
+
+    .quick-action-icon {
+        font-size: 1.75rem;
+        margin-bottom: var(--space-sm);
+    }
+
+    .quick-action-card h3 {
+        font-size: 0.95rem;
+        font-weight: 600;
+        margin-bottom: var(--space-sm);
+    }
+
+    .quick-action-card p {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-bottom: var(--space-md);
+    }
+
+    /* Form Container */
+    .form-section .glass-card {
+        padding: var(--space-2xl);
+    }
+
+    .step-indicator {
+        margin-bottom: var(--space-2xl);
+    }
+
+    .form-section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: var(--space-lg);
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+    }
+
+    .form-section-title span {
+        color: var(--accent-tertiary);
+    }
+
+    .btn-group {
+        display: flex;
+        gap: var(--space-md);
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: var(--space-xl);
+    }
+
+    /* Review Items */
+    .review-item {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: var(--space-sm) var(--space-md);
+        background: var(--glass-bg);
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--glass-border);
+    }
+
+    /* ---- Report Panel ---- */
+    .report-container {
+        margin-top: var(--space-2xl);
+    }
+
+    .report-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: var(--space-md);
+        margin-bottom: var(--space-xl);
+    }
+
+    .report-header h2 {
+        font-size: 1.5rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+    }
+
+    .report-timestamp {
+        font-size: 0.8rem;
+        color: var(--text-tertiary);
+        font-family: var(--font-mono);
+    }
+
+    /* Executive Summary */
+    .exec-summary {
+        background: linear-gradient(135deg, rgba(124, 58, 237, 0.06), rgba(6, 182, 212, 0.04));
+        border: 1px solid rgba(124, 58, 237, 0.1);
+        border-radius: var(--radius-lg);
+        padding: var(--space-xl);
+        margin-bottom: var(--space-xl);
+    }
+
+    .exec-summary .exec-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--accent-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: var(--space-sm);
+    }
+
+    .exec-summary p {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        line-height: 1.7;
+        margin-bottom: var(--space-md);
+    }
+
+    /* Detection Section */
+    .detection-grid {
+        display: grid;
+        grid-template-columns: 200px 1fr;
+        gap: var(--space-xl);
+        align-items: center;
+    }
+
+    @media (max-width: 640px) {
+        .detection-grid {
+            grid-template-columns: 1fr;
         }
+    }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+    .detection-chart-wrapper {
+        position: relative;
+        width: 180px;
+        height: 180px;
+        margin: 0 auto;
+    }
 
-        body {
-            background-color: var(--light-bg);
-            color: var(--dark-text);
-            line-height: 1.6;
-        }
+    .detection-chart-center {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+    }
 
-        .container {
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
+    .detection-chart-center .prob-value {
+        font-size: 1.75rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+    }
 
-        /* Header Styles */
-        header {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: var(--white);
-            padding: 1rem 0;
-            box-shadow: var(--shadow);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+    .detection-chart-center .prob-label {
+        font-size: 0.7rem;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
 
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    .detection-meta {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-md);
+    }
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
+    .meta-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--space-sm) 0;
+        border-bottom: 1px solid var(--glass-border);
+    }
 
-        .logo i {
-            font-size: 2rem;
-        }
+    .meta-label {
+        font-size: 0.8rem;
+        color: var(--text-tertiary);
+    }
 
-        nav ul {
-            display: flex;
-            list-style: none;
-            gap: 2rem;
-            justify-content: flex-start;
-        }
+    .meta-value {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
 
-        nav a {
-            color: var(--white);
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-        }
+    /* Agent Sections */
+    .agent-report-section {
+        padding: var(--space-xl);
+        margin-top: var(--space-lg);
+    }
 
-        nav a:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
+    .agent-report-section h3 {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin-bottom: var(--space-lg);
+    }
 
-        nav a.active {
-            background-color: rgba(255, 255, 255, 0.2);
-        }
+    .agent-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: var(--radius-sm);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+    }
 
-        /* Main Content */
-        main {
-            padding: 2rem 0 4rem;
-        }
+    .agent-icon.detection { background: rgba(239, 68, 68, 0.1); }
+    .agent-icon.analytics { background: rgba(6, 182, 212, 0.1); }
+    .agent-icon.advisory { background: rgba(245, 158, 11, 0.1); }
 
-        .page-title {
-            text-align: center;
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            color: var(--primary-color);
-        }
+    .signals-grid {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-sm);
+    }
 
-        .page-subtitle {
-            text-align: center;
-            color: var(--light-text);
-            margin-bottom: 3rem;
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-        }
+    /* Advisory Items */
+    .advisory-item {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--space-md);
+        padding: var(--space-md);
+        background: var(--glass-bg);
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--glass-border);
+    }
 
-        /* Quick Actions */
-        .quick-actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-        }
+    .advisory-priority {
+        padding: 0.2rem 0.5rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        font-family: var(--font-mono);
+        border-radius: 4px;
+        flex-shrink: 0;
+    }
 
-        .action-card {
-            background-color: var(--white);
-            border-radius: 8px;
-            padding: 1.5rem;
-            box-shadow: var(--shadow);
-            flex: 1;
-            min-width: 250px;
-            max-width: 400px;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
+    .advisory-priority.P0 { background: var(--color-danger-bg); color: var(--color-danger); }
+    .advisory-priority.P1 { background: var(--color-warning-bg); color: var(--color-warning); }
+    .advisory-priority.P2 { background: var(--color-info-bg); color: var(--color-info); }
+    .advisory-priority.P3 { background: var(--color-success-bg); color: var(--color-success); }
 
-        .action-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-hover);
-        }
+    .advisory-content h4 {
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 2px;
+    }
 
-        .action-card i {
-            font-size: 2.5rem;
-            color: var(--accent-color);
-            margin-bottom: 1rem;
-        }
+    .advisory-content p {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
 
-        .action-card h3 {
-            margin-bottom: 0.5rem;
-            color: var(--primary-color);
-        }
+    .compliance-note {
+        font-size: 0.78rem;
+        color: var(--text-tertiary);
+        padding: var(--space-md);
+        border-top: 1px solid var(--glass-border);
+        margin-top: var(--space-lg);
+        font-style: italic;
+    }
 
-        .action-card p {
-            color: var(--light-text);
-            margin-bottom: 1rem;
-        }
+    .report-actions {
+        display: flex;
+        gap: var(--space-md);
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: var(--space-xl);
+        padding-top: var(--space-xl);
+        border-top: 1px solid var(--glass-border);
+    }
+</style>
+{% endblock %}
 
-        /* Form Container */
-        .form-container {
-            background-color: var(--white);
-            border-radius: 12px;
-            box-shadow: var(--shadow);
-            padding: 2rem;
-            margin-bottom: 2rem;
-        }
+{% block content %}
+<div class="container">
+    <!-- Header -->
+    <div class="prediction-header reveal">
+        <div class="badge badge-accent mb-md">⬡ Multi-Agent Analysis</div>
+        <h1>Agentic Fraud Analysis</h1>
+        <p>Submit a loan application — Detection, Analytics, and Advisory agents run automatically</p>
+    </div>
 
-        .section-title {
-            font-size: 1.3rem;
-            color: var(--primary-color);
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid var(--light-color);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
+    <!-- Shared Report Banner (Visible only via JS URL hash) -->
+    <div id="sharedReportBanner" class="reveal"></div>
 
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-        }
+    <!-- Quick Actions -->
+    <div class="preset-btns reveal" style="justify-content: center; margin-bottom: var(--space-2xl);">
+        <button class="btn btn-outline" type="button" onclick="Presets.fill('HIGH_RISK')">🔴 Load High-Risk Scenario</button>
+        <button class="btn btn-outline" type="button" onclick="Presets.fill('LOW_RISK')">🟢 Load Genuine Scenario</button>
+        
+        <button class="btn btn-secondary" type="button" onclick="Presets.random()">🎲 Random Fill</button>
+        <button class="btn btn-secondary" type="button" onclick="Presets.dataset()">📂 Analyze Dataset Record</button>
+    </div>
 
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: var(--dark-text);
-        }
-
-        input, select {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(70, 143, 175, 0.2);
-        }
-
-        /* Buttons */
-        .btn {
-            display: inline-block;
-            padding: 0.8rem 1.5rem;
-            border-radius: 4px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: var(--white);
-        }
-
-        .btn-primary:hover {
-            background-color: var(--secondary-color);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-hover);
-        }
-
-        .btn-secondary {
-            background-color: var(--accent-color);
-            color: var(--white);
-        }
-
-        .btn-secondary:hover {
-            background-color: var(--secondary-color);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-hover);
-        }
-
-        .btn-outline {
-            background-color: transparent;
-            color: var(--primary-color);
-            border: 2px solid var(--primary-color);
-        }
-
-        .btn-outline:hover {
-            background-color: var(--primary-color);
-            color: var(--white);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-hover);
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 1.5rem;
-        }
-
-        /* Result Section */
-        .result-container {
-            background-color: var(--white);
-            border-radius: 12px;
-            box-shadow: var(--shadow);
-            padding: 2rem;
-            margin-top: 2rem;
-            display: none;
-        }
-
-        .result-container.show {
-            display: block;
-            animation: fadeIn 0.5s ease;
-        }
-
-        .result-header {
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .result-title {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-            color: var(--primary-color);
-        }
-
-        .result-badge {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 1.1rem;
-        }
-
-        .result-badge.safe {
-            background-color: rgba(82, 183, 136, 0.2);
-            color: var(--success-color);
-        }
-
-        .result-badge.warning {
-            background-color: rgba(244, 162, 97, 0.2);
-            color: var(--warning-color);
-        }
-
-        .result-badge.danger {
-            background-color: rgba(230, 57, 70, 0.2);
-            color: var(--danger-color);
-        }
-
-        .result-details {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-top: 1.5rem;
-        }
-
-        .result-item {
-            padding: 1rem;
-            background-color: var(--light-bg);
-            border-radius: 8px;
-            text-align: center;
-        }
-
-        .result-value {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--primary-color);
-        }
-
-        .result-label {
-            color: var(--light-text);
-            font-size: 0.9rem;
-            margin-top: 0.25rem;
-        }
-
-        /* Progress Bar */
-        .progress-container {
-            margin: 1.5rem 0;
-        }
-
-        .progress-bar {
-            height: 10px;
-            background-color: #e9ecef;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            border-radius: 5px;
-            transition: width 1s ease;
-        }
-
-        .progress-fill.safe {
-            background-color: var(--success-color);
-        }
-
-        .progress-fill.warning {
-            background-color: var(--warning-color);
-        }
-
-        .progress-fill.danger {
-            background-color: var(--danger-color);
-        }
-
-        /* Footer */
-        footer {
-            background-color: var(--primary-color);
-            color: var(--white);
-            padding: 2rem 0;
-            text-align: center;
-        }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                gap: 1rem;
-            }
-
-            nav ul {
-                gap: 1rem;
-            }
-
-            .page-title {
-                font-size: 2rem;
-            }
-
-            .quick-actions {
-                flex-direction: column;
-            }
-
-            .action-card {
-                max-width: 100%;
-            }
-
-            .btn-group {
-                flex-direction: column;
-            }
-
-            .btn {
-                width: 100%;
-            }
-        }
-    </style>
-</head>
-<body>
-    <header>
-        <div class="container">
-            <div class="header-content">
-                <div class="logo">
-                    <i class="fas fa-shield-alt"></i>
-                    <span>SecureLoan</span>
+    <!-- Loan Application Form -->
+    <div class="form-section">
+        <div class="glass-card no-hover reveal">
+            <!-- Step Indicator -->
+            <div class="step-indicator" role="navigation" aria-label="Form steps">
+                <div class="step-dot active">
+                    <div class="step-circle">1</div>
+                    <div class="step-label">Loan Details</div>
                 </div>
-                <nav>
-                    <ul>
-                        <li><a href="/">Home</a></li>
-                        <li><a href="/prediction" class="active">Prediction</a></li>
-                        <li><a href="/about">About</a></li>
-                    </ul>
-                </nav>
-            </div>
-        </div>
-    </header>
-
-    <main>
-        <div class="container">
-            <h1 class="page-title">🏦 Loan Fraud Detection – Prediction</h1>
-            <p class="page-subtitle">Use our advanced ML models to detect potential fraud in loan applications</p>
-
-            <!-- Quick Actions -->
-            <div class="quick-actions">
-                <div class="action-card">
-                    <i class="fas fa-dice"></i>
-                    <h3>Random Form Values</h3>
-                    <p>Fill the form with random sample data for testing</p>
-                    <form method="post" style="margin-top: 1rem;">
-                        <input type="hidden" name="mode" value="fill_random">
-                        <button type="submit" class="btn btn-secondary">🎲 Fill Random Values</button>
-                    </form>
+                <div class="step-line"></div>
+                <div class="step-dot">
+                    <div class="step-circle">2</div>
+                    <div class="step-label">Applicant</div>
                 </div>
-
-                <div class="action-card">
-                    <i class="fas fa-database"></i>
-                    <h3>Use Dataset Record</h3>
-                    <p>Predict using a random record from the dataset</p>
-                    <form method="post" style="margin-top: 1rem;">
-                        <input type="hidden" name="mode" value="random_index">
-                        <button type="submit" class="btn btn-secondary">🎯 Predict Using Random Dataset Record</button>
-                    </form>
+                <div class="step-line"></div>
+                <div class="step-dot">
+                    <div class="step-circle">3</div>
+                    <div class="step-label">Review</div>
                 </div>
             </div>
 
-            <!-- Manual Loan Entry Form -->
-            <div class="form-container">
-                <h2 class="section-title">
-                    <i class="fas fa-edit"></i>
-                    Manual Loan Entry
-                </h2>
+            <form method="post" id="predictionForm">
+                <input type="hidden" name="mode" value="manual">
 
-                <form method="post">
-                    <input type="hidden" name="mode" value="manual">
+                <!-- Live Risk Meter -->
+                <div id="liveRiskPanel">
+                    <span class="risk-meter-label">Live Risk Estimate</span>
+                    <div class="risk-meter-bar">
+                        <div class="risk-meter-fill" style="width: 0%;"></div>
+                    </div>
+                    <span class="risk-meter-score">0/100</span>
+                    <span class="risk-meter-level">✅ MINIMAL RISK</span>
+                </div>
 
+                <!-- Step 1: Loan Details -->
+                <div class="form-step active" id="step1">
+                    <div class="form-section-title"><span>01</span> Loan Information</div>
                     <div class="form-grid">
                         <div class="form-group">
-                            <label for="loan_type">Loan Type</label>
-                            <select id="loan_type" name="loan_type">
-                                {% set selected_loan_type = (form_data and form_data.loan_type) or (random_data and random_data.loan_type) %}
+                            <label class="form-label" for="loan_type">Loan Type</label>
+                            <select name="loan_type" id="loan_type" class="form-select" required>
+                                {% set v = (form_data and form_data.loan_type) or (random_data and random_data.loan_type) %}
                                 {% for opt in ["Home Loan","Personal Loan","Car Loan","Education Loan","Business Loan"] %}
-                                <option {{ "selected" if selected_loan_type == opt }}>
-                                    {{ opt }}
-                                </option>
+                                <option {{ "selected" if v == opt }}>{{ opt }}</option>
                                 {% endfor %}
                             </select>
                         </div>
-
                         <div class="form-group">
-                            <label for="loan_amount">Loan Amount ($)</label>
-                            <input type="number" id="loan_amount" name="loan_amount"
-                                   value="{{ (form_data and form_data.loan_amount) or (random_data and random_data.loan_amount) or '' }}">
+                            <label class="form-label" for="loan_amount">Loan Amount ($)</label>
+                            <input type="number" name="loan_amount" id="loan_amount" class="form-input" placeholder="e.g. 500000" value="{{ (form_data and form_data.loan_amount) or (random_data and random_data.loan_amount) or '' }}" required>
                         </div>
-
                         <div class="form-group">
-                            <label for="tenure">Tenure (Months)</label>
-                            <input type="number" id="tenure" name="tenure"
-                                   value="{{ (form_data and form_data.tenure) or (random_data and random_data.tenure) or '' }}">
+                            <label class="form-label" for="tenure">Tenure (Months)</label>
+                            <input type="number" name="tenure" id="tenure" class="form-input" placeholder="e.g. 60" value="{{ (form_data and form_data.tenure) or (random_data and random_data.tenure) or '' }}" required>
                         </div>
-
                         <div class="form-group">
-                            <label for="interest">Interest Rate (%)</label>
-                            <input type="number" step="0.01" id="interest" name="interest"
-                                   value="{{ (form_data and form_data.interest) or (random_data and random_data.interest) or '' }}">
+                            <label class="form-label" for="interest">Interest Rate (%)</label>
+                            <input type="number" step="0.01" name="interest" id="interest" class="form-input" placeholder="e.g. 12.5" value="{{ (form_data and form_data.interest) or (random_data and random_data.interest) or '' }}" required>
                         </div>
-
                         <div class="form-group">
-                            <label for="purpose">Purpose of Loan</label>
-                            <select id="purpose" name="purpose">
-                                {% set selected_purpose = (form_data and form_data.purpose) or (random_data and random_data.purpose) %}
-                                {% for opt in [
-                                "Business Expansion","Debt Consolidation","Education",
-                                "Home Renovation","Medical Emergency",
-                                "Vehicle Purchase","Wedding"] %}
-                                <option {{ "selected" if selected_purpose == opt }}>
-                                    {{ opt }}
-                                </option>
+                            <label class="form-label" for="purpose">Purpose of Loan</label>
+                            <select name="purpose" id="purpose" class="form-select" required>
+                                {% set v = (form_data and form_data.purpose) or (random_data and random_data.purpose) %}
+                                {% for opt in ["Business Expansion","Debt Consolidation","Education","Home Renovation","Medical Emergency","Vehicle Purchase","Wedding"] %}
+                                <option {{ "selected" if v == opt }}>{{ opt }}</option>
                                 {% endfor %}
                             </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="employment">Employment Status</label>
-                            <select id="employment" name="employment">
-                                {% set selected_employment = (form_data and form_data.employment) or (random_data and random_data.employment) %}
-                                {% for opt in ["Salaried","Self-Employed","Business Owner","Student","Unemployed","Retired"] %}
-                                <option {{ "selected" if selected_employment == opt }}>
-                                    {{ opt }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="income">Monthly Income ($)</label>
-                            <input type="number" id="income" name="income"
-                                   value="{{ (form_data and form_data.income) or (random_data and random_data.income) or '' }}">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="cibil">CIBIL Score</label>
-                            <input type="number" id="cibil" name="cibil"
-                                   value="{{ (form_data and form_data.cibil) or (random_data and random_data.cibil) or '' }}">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="emis">Existing EMIs ($)</label>
-                            <input type="number" id="emis" name="emis"
-                                   value="{{ (form_data and form_data.emis) or (random_data and random_data.emis) or '' }}">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="dti">Debt-to-Income Ratio</label>
-                            <input type="number" step="0.01" id="dti" name="dti"
-                                   value="{{ (form_data and form_data.dti) or (random_data and random_data.dti) or '' }}">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="property">Property Ownership</label>
-                            <select id="property" name="property">
-                                {% set selected_property = (form_data and form_data.property) or (random_data and random_data.property) %}
-                                {% for opt in ["Owned","Rented","Jointly Owned"] %}
-                                <option {{ "selected" if selected_property == opt }}>
-                                    {{ opt }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="age">Applicant Age</label>
-                            <input type="number" id="age" name="age"
-                                   value="{{ (form_data and form_data.age) or (random_data and random_data.age) or '' }}">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="gender">Gender</label>
-                            <select id="gender" name="gender">
-                                {% set selected_gender = (form_data and form_data.gender) or (random_data and random_data.gender) %}
-                                {% for opt in ["Male","Female","Other"] %}
-                                <option {{ "selected" if selected_gender == opt }}>
-                                    {{ opt }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="dependents">Dependents</label>
-                            <input type="number" id="dependents" name="dependents"
-                                   value="{{ (form_data and form_data.dependents) or (random_data and random_data.dependents) or '' }}">
                         </div>
                     </div>
-
                     <div class="btn-group">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-search"></i> Predict
-                        </button>
+                        <button type="button" class="btn btn-primary" data-step-next>Continue to Applicant →</button>
                     </div>
+                </div>
+
+                <!-- Step 2: Applicant Profile -->
+                <div class="form-step" id="step2">
+                    <div class="form-section-title"><span>02</span> Applicant Profile</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="employment">Employment Status</label>
+                            <select name="employment" id="employment" class="form-select" required>
+                                {% set v = (form_data and form_data.employment) or (random_data and random_data.employment) %}
+                                {% for opt in ["Salaried","Self-Employed","Business Owner","Student","Unemployed","Retired"] %}
+                                <option {{ "selected" if v == opt }}>{{ opt }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="income">Monthly Income ($)</label>
+                            <input type="number" name="income" id="income" class="form-input" placeholder="e.g. 50000" value="{{ (form_data and form_data.income) or (random_data and random_data.income) or '' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="cibil">CIBIL Score</label>
+                            <input type="number" name="cibil" id="cibil" class="form-input" placeholder="300-900" value="{{ (form_data and form_data.cibil) or (random_data and random_data.cibil) or '' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="emis">Existing EMIs ($)</label>
+                            <input type="number" name="emis" id="emis" class="form-input" placeholder="e.g. 5000" value="{{ (form_data and form_data.emis) or (random_data and random_data.emis) or '' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="dti">Debt-to-Income Ratio</label>
+                            <input type="number" step="0.01" name="dti" id="dti" class="form-input" placeholder="e.g. 0.35" value="{{ (form_data and form_data.dti) or (random_data and random_data.dti) or '' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="property">Property Ownership</label>
+                            <select name="property" id="property" class="form-select" required>
+                                {% set v = (form_data and form_data.property) or (random_data and random_data.property) %}
+                                {% for opt in ["Owned","Rented","Jointly Owned"] %}
+                                <option {{ "selected" if v == opt }}>{{ opt }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="age">Age</label>
+                            <input type="number" name="age" id="age" class="form-input" placeholder="e.g. 35" value="{{ (form_data and form_data.age) or (random_data and random_data.age) or '' }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="gender">Gender</label>
+                            <select name="gender" id="gender" class="form-select" required>
+                                {% set v = (form_data and form_data.gender) or (random_data and random_data.gender) %}
+                                {% for opt in ["Male","Female","Other"] %}
+                                <option {{ "selected" if v == opt }}>{{ opt }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="dependents">Number of Dependents</label>
+                            <input type="number" name="dependents" id="dependents" class="form-input" placeholder="e.g. 2" value="{{ (form_data and form_data.dependents) or (random_data and random_data.dependents) or '' }}" required>
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-secondary" data-step-prev>← Back</button>
+                        <button type="button" class="btn btn-primary" data-step-next>Review Application →</button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Review & Submit -->
+                <div class="form-step" id="step3">
+                    <div class="form-section-title"><span>03</span> Review & Submit</div>
+                    <div id="reviewSummary" class="mb-xl">
+                        <!-- Populated by JS -->
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-secondary" data-step-prev>← Back</button>
+                        <button type="submit" class="btn btn-primary btn-lg">🤖 Run Agentic Pipeline</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Report Section -->
+    {% if agentic_report %}
+    {% set pred = agentic_report.detection.prediction %}
+    <div class="report-container report-section" id="reportContainer">
+        <div class="glass-card no-hover accent-top" style="padding: var(--space-2xl);">
+            <!-- Report Header -->
+            <div class="report-header">
+                <div>
+                    <span class="badge badge-accent mb-md">⬡ Agentic Report</span>
+                    <h2>RiskSense AI Analysis</h2>
+                </div>
+                <span class="report-timestamp">{{ agentic_report.timestamp }}</span>
+            </div>
+
+            <!-- Executive Summary -->
+            <div class="exec-summary reveal">
+                <div class="exec-label">Executive Summary</div>
+                <p>{{ agentic_report.executive_summary }}</p>
+                <div style="display:flex;align-items:center;gap:var(--space-md);flex-wrap:wrap;margin-top:var(--space-md);">
+                    <div class="decision-badge {{ agentic_report.advisory.status }}">{{ agentic_report.advisory.decision }}</div>
+                    <button type="button" id="saveToCaseBtn" class="btn btn-outline btn-sm">📂 Save to Cases</button>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="window.exportPDF()">⬇ Download PDF</button>
+                    <button type="button" class="btn btn-outline btn-sm" id="shareLinkBtn" style="display:none;">🔗 Share Link</button>
+                </div>
+            </div>
+
+            <!-- Detection Agent -->
+            <div class="glass-card agent-report-section no-hover reveal">
+                <h3>
+                    <div class="agent-icon detection">🛡️</div>
+                    Detection Agent — ML Fraud Scoring
+                </h3>
+                <div class="detection-grid">
+                    <div class="detection-chart-wrapper">
+                        <canvas id="riskChart"
+                                data-probability="{{ pred.probability }}"
+                                data-fraud="{{ 'true' if pred.is_fraud else 'false' }}"
+                                width="180" height="180"></canvas>
+                        <div class="detection-chart-center">
+                            <div class="prob-value" style="color: {{ 'var(--color-danger)' if pred.is_fraud else 'var(--color-success)' }};">
+                                {{ pred.probability_display }}
+                            </div>
+                            <div class="prob-label">Fraud Probability</div>
+                        </div>
+                    </div>
+                    <div class="detection-meta">
+                        <div class="meta-row">
+                            <span class="meta-label">Prediction</span>
+                            <span class="meta-value" style="color: {{ 'var(--color-danger)' if pred.is_fraud else 'var(--color-success)' }};">{{ pred.label }}</span>
+                        </div>
+                        <div class="meta-row">
+                            <span class="meta-label">Confidence Band</span>
+                            <span class="meta-value">{{ agentic_report.detection.confidence_band }}</span>
+                        </div>
+                        <div class="meta-row">
+                            <span class="meta-label">Detection Threshold</span>
+                            <span class="meta-value font-mono">{{ (pred.applied_threshold * 100) | round(0) }}%</span>
+                        </div>
+                        {% if pred.actual_label %}
+                        <div class="meta-row">
+                            <span class="meta-label">Actual Label</span>
+                            <span class="meta-value">{{ pred.actual_label }}</span>
+                        </div>
+                        <div class="meta-row">
+                            <span class="meta-label">Dataset Index</span>
+                            <span class="meta-value font-mono">#{{ pred.record_index }}</span>
+                        </div>
+                        {% endif %}
+                        <div>
+                            <div class="progress-bar" style="margin-top: var(--space-sm);">
+                                <div class="progress-fill {{ 'danger' if pred.is_fraud else ('warning' if pred.probability >= 0.3 else 'safe') }}" style="width: {{ (pred.probability * 100)|round(1) }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Agent Workflow Trace -->
+            <div class="glass-card agent-report-section no-hover reveal">
+                <h3>
+                    <div class="agent-icon" style="background: rgba(124, 58, 237, 0.1);">⬡</div>
+                    Agent Workflow Trace
+                </h3>
+                <div class="workflow-timeline">
+                    {% for step in agentic_report.workflow_steps %}
+                    <div class="workflow-item">
+                        <div class="workflow-dot {{ step.status }}">
+                            {% if step.status == 'success' %}✓{% elif step.status == 'alert' %}!{% elif step.status == 'warning' %}⚠{% else %}→{% endif %}
+                        </div>
+                        <div class="workflow-content">
+                            <span class="workflow-agent">{{ step.agent }}</span>
+                            <span class="workflow-role">{{ step.role }}</span>
+                            <p class="workflow-message">{{ step.message }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Analytics Agent -->
+            <div class="glass-card agent-report-section no-hover reveal">
+                <h3>
+                    <div class="agent-icon analytics">📊</div>
+                    Analytics Agent — Risk Signals
+                </h3>
+                <div class="flex items-center gap-lg mb-lg flex-wrap">
+                    <span class="text-secondary">Composite Risk:</span>
+                    <span class="font-bold" style="font-size: 1.1rem;">{{ agentic_report.analytics.risk_level }}</span>
+                    <span class="badge {{ 'badge-danger' if agentic_report.analytics.risk_score >= 70 else ('badge-warning' if agentic_report.analytics.risk_score >= 45 else 'badge-success') }}">
+                        {{ agentic_report.analytics.risk_score }}/100
+                    </span>
+                </div>
+                <div class="signals-grid">
+                    {% for s in agentic_report.analytics.signals %}
+                    <div class="signal-card">
+                        <div class="signal-severity {{ s.severity }}"></div>
+                        <div>
+                            <div class="signal-factor">{{ s.factor }} <span class="badge {{ 'badge-danger' if s.severity == 'high' else ('badge-warning' if s.severity == 'medium' else 'badge-success') }}" style="font-size: 0.65rem;">{{ s.severity }}</span></div>
+                            <div class="signal-detail">{{ s.detail }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- SHAP Explainability Panel -->
+            <div class="glass-card agent-report-section no-hover reveal">
+                <h3>
+                    <div class="agent-icon" style="background: rgba(6,182,212,0.1);">🔬</div>
+                    Explainability — Feature Importance
+                </h3>
+                <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:var(--space-lg);">
+                    Contribution of each feature to the fraud probability prediction. Red bars increase fraud risk; green bars indicate legitimacy signals.
+                </p>
+                <div class="shap-bar-container" id="shapBars"
+                     data-probability="{{ pred.probability }}"
+                     data-signals="{{ agentic_report.analytics.signals | map(attribute='factor') | list | tojson }}"
+                     data-severities="{{ agentic_report.analytics.signals | map(attribute='severity') | list | tojson }}"
+                     data-formdata="{{ application_json | default('{}') | forceescape }}">
+                </div>
+            </div>
+
+            <!-- Advisory Agent -->
+            <div class="glass-card agent-report-section no-hover reveal">
+                <h3>
+                    <div class="agent-icon advisory">⚖️</div>
+                    Advisory Agent — Recommendations
+                </h3>
+                <div class="signals-grid">
+                    {% for item in agentic_report.advisory.items %}
+                    <div class="advisory-item">
+                        <span class="advisory-priority {{ item.priority }}">{{ item.priority }}</span>
+                        <div class="advisory-content">
+                            <h4>{{ item.action }}</h4>
+                            <p>{{ item.rationale }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="compliance-note">
+                    {{ agentic_report.advisory.compliance_note }}
+                </div>
+            </div>
+
+            <!-- Report Actions -->
+            <div class="report-actions">
+                {% if application_json %}
+                <form method="post" action="/advisor" style="display:inline;">
+                    <input type="hidden" name="application_json" value="{{ application_json | forceescape }}">
+                    <button type="submit" class="btn btn-primary">💬 Discuss with AI Advisor</button>
                 </form>
+                {% endif %}
+                <button type="button" class="btn btn-secondary" id="shareLinkBtn">🔗 Copy Share Link</button>
+                <button type="button" class="btn btn-secondary" onclick="exportPDF()">📄 Download PDF</button>
+                <a href="/prediction?clear=true" class="btn btn-outline" style="margin-left: auto;">New Analysis →</a>
             </div>
-
-            <!-- Prediction Result -->
-            {% if result %}
-            <div class="result-container show">
-                <div class="result-header">
-                    <h2 class="result-title">Prediction Result</h2>
-                    <div id="resultBadge" class="result-badge {{ 'danger' if 'FRAUD' in result else 'safe' }}">
-                        {{ result }}
-                    </div>
-                </div>
-
-                <div class="progress-container">
-                    <p>Fraud Probability</p>
-                    <div class="progress-bar">
-                        <div id="progressFill" class="progress-fill {{ 'danger' if 'FRAUD' in result else 'safe' }}" 
-                             style="width: {{ (probability_value * 100)|round(1) }}%"></div>
-                    </div>
-                    <p style="text-align: center; margin-top: 0.5rem;">{{ probability }}</p>
-                </div>
-
-                <div class="result-details">
-                    <div class="result-item">
-                        <div class="result-value">{{ result }}</div>
-                        <div class="result-label">Predicted Class</div>
-                    </div>
-                    <div class="result-item">
-                        <div class="result-value">{{ probability }}</div>
-                        <div class="result-label">Fraud Probability</div>
-                    </div>
-                    {% if record_index is not none %}
-                    <div class="result-item">
-                        <div class="result-value">{{ record_index }}</div>
-                        <div class="result-label">Dataset Record Index</div>
-                    </div>
-                    <div class="result-item">
-                        <div class="result-value">{{ actual_label }}</div>
-                        <div class="result-label">Actual Label</div>
-                    </div>
-                    {% endif %}
-                </div>
-
-                <div class="btn-group" style="margin-top: 2rem;">
-                    <a href="/prediction?clear=true" class="btn btn-outline">
-                        <i class="fas fa-redo"></i> Try Another Prediction
-                    </a>
-                </div>
-            </div>
-            {% endif %}
         </div>
-    </main>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
 
-    <footer>
-        <div class="container">
-            <p>&copy; 2026 SecureLoan Fraud Detection System. All rights reserved.</p>
-        </div>
-    </footer>
-</body>
-</html>
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/prediction.js') }}"></script>
+{% endblock %}
