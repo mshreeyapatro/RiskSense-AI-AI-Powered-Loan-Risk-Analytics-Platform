@@ -1,5 +1,6 @@
 import json
 import os
+import secrets
 from datetime import datetime, timezone
 from flask import Flask, jsonify, render_template, request
 
@@ -7,7 +8,17 @@ from agents.orchestrator import RiskSenseOrchestrator
 from ml.predictor import FraudPredictor
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "risksense-dev-key-change-in-prod")
+
+_secret_key = os.environ.get("SECRET_KEY")
+if not _secret_key:
+    _secret_key = secrets.token_hex(32)
+    app.logger.warning(
+        "SECRET_KEY not set; generated a random key for this process. Sessions "
+        "won't persist across restarts and will break across multiple workers "
+        "(e.g. gunicorn). Set SECRET_KEY explicitly for production or "
+        "multi-worker deployments."
+    )
+app.secret_key = _secret_key
 
 predictor = FraudPredictor()
 orchestrator = RiskSenseOrchestrator(predictor)
@@ -43,6 +54,11 @@ def dashboard():
 @app.route("/batch")
 def batch():
     return render_template("batch.html")
+
+
+@app.route("/cases")
+def cases():
+    return render_template("cases.html")
 
 
 
@@ -153,6 +169,15 @@ def api_analyze():
                     for s in report.analytics.signals
                 ],
             },
+            "anomaly": (
+                {
+                    "reconstruction_error": report.detection.anomaly.reconstruction_error,
+                    "threshold": report.detection.anomaly.threshold,
+                    "is_anomaly": report.detection.anomaly.is_anomaly,
+                }
+                if report.detection.anomaly
+                else None
+            ),
             "advisory": {
                 "decision": report.advisory.decision,
                 "items": [
@@ -233,6 +258,7 @@ def api_batch():
                 "risk_score": report.analytics.risk_score,
                 "risk_level": report.analytics.risk_level,
                 "decision": report.advisory.decision,
+                "is_anomaly": bool(report.detection.anomaly and report.detection.anomaly.is_anomaly),
             })
         except Exception as exc:
             results.append({
@@ -288,6 +314,7 @@ def api_health():
                 "analytics": "online",
                 "advisory": "online",
                 "orchestrator": "online",
+                "deep_anomaly_detector": "online" if orchestrator.anomaly_detector else "unavailable (run train_autoencoder.py)",
             },
             "features": {
                 "batch_screening": True,

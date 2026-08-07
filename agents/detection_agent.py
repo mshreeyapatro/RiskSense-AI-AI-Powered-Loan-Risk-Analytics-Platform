@@ -7,6 +7,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from ml.anomaly_detector import AnomalyDetector, AnomalyResult
 from ml.predictor import FraudPredictor, PredictionResult
 
 
@@ -18,24 +19,30 @@ class DetectionReport:
     prediction: PredictionResult
     summary: str
     confidence_band: str
+    anomaly: AnomalyResult | None = None
 
 
 class DetectionAgent:
     AGENT_NAME = "Detection Agent"
     ROLE = "ML Fraud Scoring"
 
-    def __init__(self, predictor: FraudPredictor):
+    def __init__(self, predictor: FraudPredictor, anomaly_detector: AnomalyDetector | None = None):
         self.predictor = predictor
+        self.anomaly_detector = anomaly_detector
 
     def score_application(self, form_data: dict[str, Any]) -> DetectionReport:
         prediction = self.predictor.predict_from_form(form_data)
-        return self._build_report(prediction)
+        anomaly = self.anomaly_detector.score(form_data) if self.anomaly_detector else None
+        return self._build_report(prediction, anomaly)
 
     def score_dataset_record(self) -> tuple[DetectionReport, int]:
-        prediction, record_index, _ = self.predictor.predict_random_dataset_record()
-        return self._build_report(prediction), record_index
+        prediction, record_index, row = self.predictor.predict_random_dataset_record()
+        anomaly = self.anomaly_detector.score_row(row) if self.anomaly_detector else None
+        return self._build_report(prediction, anomaly), record_index
 
-    def _build_report(self, prediction: PredictionResult) -> DetectionReport:
+    def _build_report(
+        self, prediction: PredictionResult, anomaly: AnomalyResult | None = None
+    ) -> DetectionReport:
         prob_pct = prediction.probability * 100
         if prediction.is_fraud:
             band = "High Risk"
@@ -59,6 +66,15 @@ class DetectionAgent:
             )
             status = "success"
 
+        if anomaly and anomaly.is_anomaly:
+            summary += (
+                f" Deep anomaly detector also flagged this profile (reconstruction error "
+                f"{anomaly.reconstruction_error:.4f} exceeds learned genuine-profile threshold "
+                f"{anomaly.threshold:.4f})."
+            )
+            if status == "success":
+                status = "warning"
+
         return DetectionReport(
             agent_name=self.AGENT_NAME,
             role=self.ROLE,
@@ -66,4 +82,5 @@ class DetectionAgent:
             prediction=prediction,
             summary=summary,
             confidence_band=band,
+            anomaly=anomaly,
         )

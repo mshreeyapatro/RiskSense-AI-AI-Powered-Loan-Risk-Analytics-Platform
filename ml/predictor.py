@@ -22,17 +22,22 @@ def calculate_dynamic_threshold(form_data: dict[str, Any]) -> float:
     threshold = BASE_FRAUD_THRESHOLD
     
     # Extract key metrics safely
-    try: cibil = int(float(form_data.get("cibil", 600)))
-    except: cibil = 600
-    
-    try: dti = float(form_data.get("dti", 0.4))
-    except: dti = 0.4
-    
+    try:
+        cibil = int(float(form_data.get("cibil", 600)))
+    except (TypeError, ValueError):
+        cibil = 600
+
+    try:
+        dti = float(form_data.get("dti", 0.4))
+    except (TypeError, ValueError):
+        dti = 0.4
+
     try:
         emis = float(form_data.get("emis", 0))
         income = float(form_data.get("income", 1))
         emi_burden = emis / income if income > 0 else 0
-    except: emi_burden = 0
+    except (TypeError, ValueError):
+        emi_burden = 0
 
     # Adjust threshold based on risk gravity
     # Very poor credit score = stricter (lower) threshold to catch fraud

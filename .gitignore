@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.eggs/
+.venv/
+venv/
+env/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# ML artifacts & data (large binaries — track via releases/DVC/LFS instead)
+*.pkl
+*.csv
+!autoencoder_meta.pkl
+loan_fraud_ensemble_model.pkl
+preprocessor.pkl
+loan_applications.csv
+loan_fraud_smote_balanced_dataset.csv
+
+# Generated reports
+*.docx
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

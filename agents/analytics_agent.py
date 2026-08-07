@@ -7,7 +7,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from ml.predictor import PredictionResult
+from agents.detection_agent import DetectionReport
 
 
 @dataclass
@@ -33,8 +33,9 @@ class AnalyticsAgent:
     ROLE = "Feature Risk Interpretation"
 
     def analyze(
-        self, form_data: dict[str, Any], prediction: PredictionResult
+        self, form_data: dict[str, Any], detection: DetectionReport
     ) -> AnalyticsReport:
+        prediction = detection.prediction
         signals: list[RiskSignal] = []
         score = 0
 
@@ -122,6 +123,18 @@ class AnalyticsAgent:
                     "Applicant Age",
                     "medium",
                     f"Age {age} is outside typical prime borrowing range.",
+                )
+            )
+
+        if detection.anomaly and detection.anomaly.is_anomaly:
+            score += 15
+            signals.append(
+                RiskSignal(
+                    "Deep Anomaly Signal",
+                    "high",
+                    f"Autoencoder reconstruction error {detection.anomaly.reconstruction_error:.4f} "
+                    f"exceeds the learned genuine-profile threshold {detection.anomaly.threshold:.4f}; "
+                    "this application's feature pattern diverges from typical approved profiles.",
                 )
             )
 

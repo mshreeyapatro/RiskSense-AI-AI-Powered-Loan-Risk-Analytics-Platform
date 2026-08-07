@@ -1,8 +1,8 @@
 # Use official Python image
 FROM python:3.10-slim
 
-# # Prevents Python from buffering stdout/stderr
-# ENV PYTHONUNBUFFERED=1
+# Prevents Python from buffering stdout/stderr
+ENV PYTHONUNBUFFERED=1
 
 # Set working directory
 WORKDIR /app
@@ -20,4 +20,4 @@ COPY . .
 EXPOSE 5000
 
 # Run with Gunicorn for production
-CMD ["python","app.py"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "app:app"]

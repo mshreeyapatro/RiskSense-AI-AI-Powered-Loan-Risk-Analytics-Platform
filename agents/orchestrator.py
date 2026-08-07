@@ -12,6 +12,7 @@ import os
 from agents.advisory_agent import AdvisoryAgent, AdvisoryReport
 from agents.analytics_agent import AnalyticsAgent, AnalyticsReport
 from agents.detection_agent import DetectionAgent, DetectionReport
+from ml.anomaly_detector import AnomalyDetector
 from ml.predictor import FraudPredictor
 
 
@@ -42,7 +43,8 @@ class RiskSenseOrchestrator:
 
     def __init__(self, predictor: FraudPredictor | None = None):
         self.predictor = predictor or FraudPredictor()
-        self.detection_agent = DetectionAgent(self.predictor)
+        self.anomaly_detector = AnomalyDetector.load(self.predictor)
+        self.detection_agent = DetectionAgent(self.predictor, self.anomaly_detector)
         self.analytics_agent = AnalyticsAgent()
         self.advisory_agent = AdvisoryAgent()
 
@@ -68,7 +70,7 @@ class RiskSenseOrchestrator:
             )
         )
 
-        analytics = self.analytics_agent.analyze(form_data, detection.prediction)
+        analytics = self.analytics_agent.analyze(form_data, detection)
         steps.append(
             AgentStep(
                 analytics.agent_name,
@@ -109,7 +111,7 @@ class RiskSenseOrchestrator:
         detection, record_index = self.detection_agent.score_dataset_record()
         row = self.predictor.dataset.iloc[record_index]
         form_data = self._dataset_row_to_form(row)
-        analytics = self.analytics_agent.analyze(form_data, detection.prediction)
+        analytics = self.analytics_agent.analyze(form_data, detection)
         advisory = self.advisory_agent.advise(form_data, detection, analytics)
 
         steps = [
