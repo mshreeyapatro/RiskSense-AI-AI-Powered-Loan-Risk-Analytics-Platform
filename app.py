@@ -328,12 +328,6 @@ def api_health():
         return jsonify({"status": "degraded", "error": str(exc)}), 500
 
 
-@app.route("/api/docs")
-def api_docs():
-    """Interactive API documentation page."""
-    return render_template("api_docs.html")
-
-
 # ---- Error Handlers ----------------------------------------------------
 
 @app.errorhandler(404)

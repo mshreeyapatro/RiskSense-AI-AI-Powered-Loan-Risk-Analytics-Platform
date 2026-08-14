@@ -1,0 +1,460 @@
+RISKSENSE AI
+Agentic Banking Fraud Analytics and Advisory Platform
+
+Knowledge Transfer Document
+
+Course: Deep Learning and Its Applications
+Team Size: 5 Members
+Date: August 12, 2026
+
+
+================================================================
+1. ABSTRACT
+================================================================
+
+Financial institutions face increasing losses from fraudulent loan
+applications, and conventional rule-based screening systems struggle to
+keep pace with evolving fraud patterns while also failing to explain their
+decisions to human reviewers. This project presents RiskSense AI, an
+agentic banking fraud analytics platform that combines supervised machine
+learning, unsupervised deep learning, and a rule-based reasoning layer to
+detect, explain, and recommend action on potentially fraudulent loan
+applications.
+
+The system evaluates each loan application using two complementary
+models: a Random Forest classifier trained on historical labeled data to
+estimate fraud probability, and a deep autoencoder neural network trained
+only on genuine (non-fraudulent) applications to learn the manifold of
+"normal" applicant behavior. The autoencoder flags any application whose
+reconstruction error exceeds a learned threshold as anomalous, providing a
+deep-learning-based risk signal that is independent of, and complementary
+to, the supervised classifier. These signals are consumed by a three-stage
+multi-agent pipeline (Detection, Analytics, Advisory) that converts raw
+model outputs into a composite 0-100 risk score, human-readable risk
+signals, and a recommended banking action (standard approval, manual
+review, or block and escalate), exposed through a Flask-based web
+application with dashboards, batch screening, case management, and a
+conversational advisor.
+
+Beyond building the system, the project places strong emphasis on
+rigorous, honest model evaluation: the team identified that the originally
+deployed classifier had been evaluated only on its own training data (an
+overly optimistic AUC of 1.0) and conducted a proper held-out evaluation,
+which revealed the true generalization performance (AUC approximately
+0.58 for the classifier, approximately 0.49 for the autoencoder) and
+exposed that the dataset's fraud label carries limited learnable signal
+in the given features. This finding is documented transparently as a key
+methodological contribution of the project, demonstrating the importance
+of train/test discipline when applying deep learning to real-world,
+imperfectly-labeled tabular data.
+
+Keywords: Deep Learning, Autoencoder, Anomaly Detection, Fraud Detection,
+Multi-Agent Systems, Random Forest, Model Evaluation, Tabular Data
+
+
+================================================================
+2. INTRODUCTION AND PROBLEM STATEMENT
+================================================================
+
+Loan fraud detection is traditionally approached as a binary supervised
+classification problem: a model is trained on historical applications
+labeled as "fraud" or "genuine" and learns to predict the probability of
+fraud for new applications. This approach has two weaknesses that
+RiskSense AI is designed to address:
+
+1. Supervised models can only detect fraud patterns present in their
+   training data. Novel or rare fraud patterns that do not resemble past
+   labeled fraud cases may go undetected.
+
+2. Model outputs are typically a single probability score with no
+   explanation, making it difficult for a bank's fraud analyst to trust,
+   audit, or act on the prediction.
+
+RiskSense AI addresses the first weakness with an unsupervised deep
+learning component (an autoencoder trained only on genuine applications)
+that can flag applications that look "unusual" even if they do not match
+any previously seen fraud pattern. It addresses the second weakness with
+a multi-agent reasoning layer that converts model outputs into
+explainable risk signals and concrete recommended actions.
+
+
+================================================================
+3. OBJECTIVES
+================================================================
+
+- Build a supervised fraud classification model on historical loan
+  application data.
+- Design and train a deep learning autoencoder to model the distribution
+  of genuine applications and flag deviations as an anomaly/risk signal.
+- Combine the supervised and unsupervised signals into a unified,
+  explainable risk assessment pipeline.
+- Present results to end users (fraud analysts) through an interactive
+  web application with single-application analysis, batch screening,
+  dashboards, and case management.
+- Rigorously evaluate both models on properly held-out data and report
+  results honestly, including negative findings.
+
+
+================================================================
+4. SYSTEM ARCHITECTURE
+================================================================
+
+The system follows a layered pipeline:
+
+    Browser / API client
+        |
+        v
+    Flask application (app.py) -- page routes + REST API
+        |
+        v
+    RiskSenseOrchestrator (agents/orchestrator.py)
+        |
+        |-- Stage 1: Detection Agent (agents/detection_agent.py)
+        |       |-- FraudPredictor (ml/predictor.py)
+        |       |     Random Forest classifier + fitted preprocessor
+        |       |-- AnomalyDetector (ml/anomaly_detector.py)
+        |             PyTorch autoencoder (deep learning component)
+        |
+        |-- Stage 2: Analytics Agent (agents/analytics_agent.py)
+        |       Rule-based composite risk scoring (0-100) combining
+        |       classifier probability, autoencoder anomaly flag, and
+        |       domain heuristics (CIBIL score, debt-to-income ratio,
+        |       loan-to-income ratio, employment status, age, etc.)
+        |
+        |-- Stage 3: Advisory Agent (agents/advisory_agent.py)
+                Converts the risk score into a final decision (Standard
+                Approval / Manual Review / Block and Escalate) and a
+                list of recommended action items.
+        |
+        v
+    Agentic Report -> rendered as HTML (templates/prediction.html)
+                       or returned as JSON (/api/analyze)
+
+Both models are trained offline (train.py for the classifier and
+preprocessor, train_autoencoder.py for the autoencoder) and their
+artifacts (.pkl / .pt files) are loaded once at application startup for
+fast inference.
+
+
+================================================================
+5. DATASET
+================================================================
+
+Primary dataset: loan_applications.csv - 50,000 synthetic loan
+application records, approximately 2.1% labeled as fraud (fraud_flag).
+
+Key columns used as model features:
+  Numeric  - loan_amount_requested, loan_tenure_months,
+             interest_rate_offered, monthly_income, cibil_score,
+             existing_emis_monthly, debt_to_income_ratio,
+             applicant_age, number_of_dependents
+  Categorical - loan_type, purpose_of_loan, employment_status,
+             property_ownership_status, gender
+  Target   - fraud_flag (0 = genuine, 1 = fraud)
+
+Columns dropped before modeling (identifiers / leakage / free text):
+  application_id, customer_id, application_date, residential_address,
+  fraud_type, loan_status
+
+A secondary file, loan_fraud_smote_balanced_dataset.csv, is a
+pre-scaled, one-hot-encoded, SMOTE-balanced export used for offline
+experimentation in the exploratory notebook; it is not used at runtime.
+
+Known data quality issue: debt_to_income_ratio in the raw CSV ranges
+from 0 to 102 (a ratio, not a fraction), while several parts of the
+application (the web form, the dynamic threshold logic, and the
+analytics rules) assume it is a 0-1 fraction. This is a documented
+train/serve inconsistency worth being aware of when extending the
+system.
+
+
+================================================================
+6. METHODOLOGY
+================================================================
+
+6.1 Data Preprocessing
+----------------------
+A scikit-learn ColumnTransformer applies StandardScaler to the 9
+numeric features and OneHotEncoder to the 5 categorical features,
+producing a fixed-width feature vector (28 dimensions). This fitted
+transformer is persisted as preprocessor.pkl and reused identically by
+both the classifier and the autoencoder, ensuring both models see the
+same feature representation.
+
+Class imbalance (only ~2.1% fraud) is addressed using SMOTE
+(Synthetic Minority Over-sampling Technique) prior to training the
+supervised classifier.
+
+6.2 Supervised Model: Random Forest Classifier
+-----------------------------------------------
+A RandomForestClassifier (100 trees, random_state=42) is trained on the
+SMOTE-balanced, preprocessed data to output a fraud probability for
+each application. Rather than a fixed 0.5 decision threshold, the
+system computes a dynamic threshold per applicant (base 0.40, adjusted
+by +/-0.05 to +/-0.10 based on CIBIL score, debt-to-income ratio, and
+EMI burden, clamped to the range 0.20-0.60), so that inherently
+riskier applicant profiles are held to a stricter bar.
+
+An exploratory notebook (bankloanfraud.ipynb) additionally trains a
+soft-voting ensemble of Random Forest, HistGradientBoostingClassifier,
+and K-Nearest-Neighbors models; this ensemble was an experimental
+comparison and is not the model currently deployed in production (the
+deployed artifact is the plain Random Forest from train.py, despite
+being named loan_fraud_ensemble_model.pkl).
+
+6.3 Deep Learning Component: Tabular Autoencoder (Core DL Contribution)
+-------------------------------------------------------------------------
+This is the central deep learning component of the project, developed
+to demonstrate an unsupervised neural network approach to anomaly
+detection, distinct from the supervised classifier.
+
+  Type: Fully-connected (dense) autoencoder, implemented in PyTorch.
+        Symmetric encoder-decoder architecture with ReLU activations.
+
+  Architecture:
+        Input (28) -> Linear(28,16) -> ReLU -> Linear(16,8) -> ReLU
+                                          [bottleneck, 8 dims]
+        -> Linear(8,16) -> ReLU -> Linear(16,28)  [reconstruction]
+
+  Input features: the same 28-dimensional preprocessed feature vector
+        used by the Random Forest (output of the shared
+        ColumnTransformer) - no raw text or identifier columns.
+
+  Loss function: Mean Squared Error (MSE) between the input vector and
+        its reconstruction.
+
+  Training strategy: The autoencoder is trained ONLY on genuine
+        (fraud_flag = 0) applications, using a 90/10 train/validation
+        split. This means the network only ever learns to compress and
+        reconstruct "normal" applicant profiles.
+
+  Hyperparameters: 30 epochs, batch size 256, Adam optimizer
+        (learning rate 1e-3), bottleneck dimension 8, hidden layer
+        width 16.
+
+  Anomaly threshold: After training, reconstruction error is computed
+        on the held-out genuine validation set, and the anomaly
+        threshold is set to the 97.5th percentile of that error
+        distribution. At inference time, any application whose
+        reconstruction error exceeds this threshold is flagged as
+        anomalous.
+
+  Why this design: An application that resembles the genuine
+        applications the network was trained on will reconstruct with
+        low error. An application with an unusual combination of
+        features (a pattern the network has not learned to compress
+        well) will reconstruct with high error. This makes
+        reconstruction error a natural unsupervised proxy for
+        "how unusual is this application", independent of whether that
+        exact pattern was ever labeled as fraud in the training data.
+
+  Integration: The autoencoder's output (reconstruction error,
+        threshold, boolean is_anomaly flag) is attached to the
+        Detection Agent's report. If flagged, the Analytics Agent adds
+        a "Deep Anomaly Signal" (high severity) to the risk signal list
+        and adds +15 points to the composite 0-100 risk score. The
+        system degrades gracefully if the autoencoder artifacts are
+        absent (reported as "unavailable" via the /api/health
+        endpoint) so the rest of the application remains functional.
+
+6.4 Multi-Agent Orchestration Layer
+-------------------------------------
+Three coordinated agents convert numeric model output into a
+human-usable decision:
+  - Detection Agent: runs both models and packages their raw outputs.
+  - Analytics Agent: converts raw outputs and rule-based heuristics
+    (CIBIL score thresholds, debt-to-income ratio, loan-to-income
+    ratio, EMI burden, employment status, applicant age) into a
+    composite 0-100 risk score and a list of explainable risk signals.
+    Risk levels: Critical (>=70), High (>=45), Moderate (>=25), Low
+    (below 25).
+  - Advisory Agent: maps the final risk level to a recommended banking
+    action (Standard Approval, Manual Review, or Block and Escalate)
+    and a list of concrete next-step action items.
+
+A lightweight conversational "advisor" (heuristic keyword matching, not
+a large language model) lets users ask follow-up questions about a
+given result within the web interface.
+
+
+================================================================
+7. TECHNOLOGY STACK
+================================================================
+
+  Backend        : Python 3.10, Flask 3.0.0, Gunicorn 23.0.0 (production)
+  Deep Learning  : PyTorch 2.8.0 (CPU)
+  Classical ML   : scikit-learn 1.6.1, imbalanced-learn 0.14.2 (SMOTE)
+  Data handling  : pandas 2.3.3, numpy 2.2.6, joblib 1.3.2
+  Frontend       : Jinja2 templates, vanilla JavaScript, custom CSS
+                   design system (no JS framework)
+  Testing / CI   : pytest 8.3.3, GitHub Actions (runs test suite on
+                   every push/PR to main)
+  Containerization: Docker (python:3.10-slim base image, Gunicorn with
+                   4 workers)
+  Exploratory work: Jupyter notebook (bankloanfraud.ipynb) with
+                   matplotlib, seaborn, gradio for early EDA/demo work
+
+
+================================================================
+8. PROJECT STRUCTURE
+================================================================
+
+  app.py                       Flask entry point: routes + REST API
+  agents/
+    orchestrator.py            Runs Detection -> Analytics -> Advisory
+    detection_agent.py         Wraps classifier + autoencoder
+    analytics_agent.py         Rule-based composite risk scoring
+    advisory_agent.py          Final decision + action items
+  ml/
+    predictor.py                FraudPredictor (Random Forest wrapper)
+    anomaly_detector.py         AnomalyDetector (autoencoder wrapper)
+    autoencoder_model.py        TabularAutoencoder PyTorch module
+  train.py                      Trains preprocessor + Random Forest
+  train_autoencoder.py          Trains the autoencoder
+  evaluate_anomaly_detector.py  Honest held-out evaluation, writes
+                                 EVALUATION.md
+  bankloanfraud.ipynb           Exploratory notebook (EDA, ensemble
+                                 experiment)
+  loan_applications.csv         Primary dataset (50,000 rows)
+  *.pkl / autoencoder.pt        Persisted trained model artifacts
+  templates/, static/           Web UI (pages, CSS, JS)
+  tests/                        pytest test suite
+  README.md, EVALUATION.md,
+  UPDATE.md, feature_suggestions.md   Project documentation
+
+
+================================================================
+9. RESULTS AND EVALUATION
+================================================================
+
+A key contribution of this project is methodological: the team
+discovered that the originally deployed Random Forest model had been
+evaluated only on its own training data, producing a misleadingly
+perfect AUC of 1.0. The team implemented a proper held-out evaluation
+(evaluate_anomaly_detector.py) and obtained the following honest
+results on unseen data:
+
+  Random Forest classifier (properly held out): AUC approximately 0.58
+  Autoencoder (reconstruction-error based)     : AUC approximately 0.49
+                                                  (Precision 0.20,
+                                                   Recall 0.03,
+                                                   F1 0.05)
+
+These results indicate that, on this particular synthetic dataset,
+neither model separates fraudulent from genuine applications much
+better than chance once evaluated correctly. The team's conclusion,
+documented in EVALUATION.md, is that the fraud_flag label in this
+dataset likely carries little real signal correlated with the given
+features - i.e., the synthetic fraud generation process was not
+strongly tied to the observable applicant attributes. This is reported
+transparently as a negative/methodological finding rather than
+suppressed, and is presented as evidence of the team's evaluation
+discipline: a model that appears "perfect" during training must always
+be checked against a proper held-out set before being trusted.
+
+
+================================================================
+10. CHALLENGES AND LIMITATIONS
+================================================================
+
+- No train/test split existed in the original training script; this
+  was identified and corrected as part of the evaluation work.
+- The dataset's fraud label does not appear to be strongly learnable
+  from the given tabular features, limiting both models' real-world
+  discriminative power on this specific dataset.
+- A feature-scale inconsistency exists for debt_to_income_ratio between
+  the raw training data (a ratio, e.g. up to 102) and several parts of
+  the application that assume a 0-1 fraction.
+- The "advisor" chat feature is heuristic/keyword-based rather than a
+  true language model, so it can only answer a limited set of
+  pre-anticipated question patterns.
+- The autoencoder, being trained only on genuine records, has never
+  seen actual fraud examples during training - by design, but this
+  also means it cannot learn fraud-specific patterns, only deviations
+  from "normal."
+
+
+================================================================
+11. HOW TO RUN THE PROJECT
+================================================================
+
+1. Install dependencies:
+     pip install -r requirements.txt
+     pip install -r requirements-dev.txt   (for running tests)
+
+2. (Re)train artifacts if needed (already committed to the repo):
+     python train.py                 - preprocessor + Random Forest
+     python train_autoencoder.py     - autoencoder (optional; app runs
+                                        without it, with the deep
+                                        anomaly signal reported as
+                                        unavailable)
+
+3. Run the application:
+     python app.py
+     Open http://localhost:5000
+
+4. Run tests:
+     pytest tests/ -v
+
+5. Production (Docker):
+     docker build -t risksense-ai .
+     docker run -p 5000:5000 risksense-ai
+     (runs via: gunicorn --bind 0.0.0.0:5000 --workers 4 app:app)
+
+6. Regenerate the evaluation report:
+     python evaluate_anomaly_detector.py
+
+Key pages once running: / (home), /prediction (single-application
+agentic analysis), /agents (architecture explainer), /advisor (chat),
+/dashboard, /batch (bulk CSV screening), /cases (case management),
+/portfolio, /api/docs (REST API documentation).
+
+
+================================================================
+12. FUTURE WORK
+================================================================
+
+- Acquire or construct a dataset where the fraud label is more strongly
+  tied to observable features, to properly validate both models'
+  discriminative power.
+- Replace the heuristic advisor chat with a true LLM-backed
+  conversational agent grounded in the analysis output.
+- Fix the debt_to_income_ratio scale inconsistency between training
+  data and serving-time logic.
+- Explore a variational or LSTM-based autoencoder if sequential
+  application history per customer becomes available.
+- Add model monitoring/drift detection for production deployment.
+
+
+================================================================
+13. CONCLUSION
+================================================================
+
+RiskSense AI demonstrates an end-to-end application of deep learning to
+a real-world tabular risk-scoring problem: a PyTorch autoencoder learns
+the manifold of genuine loan applications and flags deviations as an
+unsupervised risk signal, complementing a supervised Random Forest
+classifier within an explainable, multi-agent decision pipeline exposed
+through a full web application. Equally important, the project
+demonstrates sound machine learning practice by identifying and
+correcting an invalid training-data-only evaluation, and by reporting
+the resulting honest (modest) performance numbers rather than
+overstating results - a methodological lesson as valuable as the system
+itself for a course on deep learning and its applications.
+
+
+================================================================
+14. KEY FILE REFERENCE (APPENDIX)
+================================================================
+
+  ml/autoencoder_model.py        Autoencoder architecture definition
+  train_autoencoder.py           Autoencoder training script
+  ml/anomaly_detector.py         Autoencoder inference wrapper
+  ml/predictor.py                Random Forest inference + dynamic
+                                  threshold logic
+  train.py                       Random Forest + preprocessor training
+  agents/analytics_agent.py      Composite risk scoring rules
+  agents/advisory_agent.py       Final decision logic
+  EVALUATION.md                  Full honest evaluation write-up
+  bankloanfraud.ipynb             Exploratory EDA and ensemble
+                                  experiment notebook
