@@ -193,7 +193,15 @@ function renderResultsTable() {
 
     const riskClass = level => level === 'Critical' ? 'high' : level === 'High' ? 'high' : level === 'Moderate' ? 'medium' : 'low';
 
-    tbody.innerHTML = filtered.map(r => `
+    tbody.innerHTML = filtered.map(r => r.error ? `
+        <tr class="error-row">
+            <td style="font-family:var(--font-mono);color:var(--text-tertiary);font-size:0.75rem;">#${r.index}</td>
+            <td>${r.loan_type || '—'}</td>
+            <td style="font-family:var(--font-mono);">$${Number(r.loan_amount||0).toLocaleString()}</td>
+            <td><span class="badge badge-warning">⚠️ SCORING FAILED</span></td>
+            <td colspan="3" style="font-size:0.78rem;color:var(--text-secondary);">${r.error}</td>
+        </tr>
+    ` : `
         <tr class="${r.is_fraud ? 'fraud-row' : ''}">
             <td style="font-family:var(--font-mono);color:var(--text-tertiary);font-size:0.75rem;">#${r.index}</td>
             <td>${r.loan_type || '—'}</td>

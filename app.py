@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from flask import Flask, jsonify, render_template, request
 
 from agents.orchestrator import RiskSenseOrchestrator
-from ml.predictor import FraudPredictor
+from ml.predictor import DATASET_PATH, FraudPredictor
 
 app = Flask(__name__)
 
@@ -261,8 +261,11 @@ def api_batch():
                 "is_anomaly": bool(report.detection.anomaly and report.detection.anomaly.is_anomaly),
             })
         except Exception as exc:
+            safe_data = app_data if isinstance(app_data, dict) else {}
             results.append({
                 "index": i + 1,
+                "loan_type": safe_data.get("loan_type", "Unknown"),
+                "loan_amount": safe_data.get("loan_amount", 0),
                 "error": str(exc),
                 "is_fraud": False,
                 "probability": 0,
@@ -306,7 +309,7 @@ def api_health():
             },
             "dataset": {
                 "records": dataset_size,
-                "path": "loan_applications.csv",
+                "path": DATASET_PATH,
                 "status": "loaded",
             },
             "agents": {

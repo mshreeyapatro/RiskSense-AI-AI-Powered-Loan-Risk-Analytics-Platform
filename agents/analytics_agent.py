@@ -28,6 +28,16 @@ class AnalyticsReport:
     narrative: str = ""
 
 
+def _safe_float(val: Any, default: float = 0.0) -> float:
+    try: return float(val) if val else default
+    except (ValueError, TypeError): return default
+
+
+def _safe_int(val: Any, default: int = 0) -> int:
+    try: return int(float(val)) if val else default
+    except (ValueError, TypeError): return default
+
+
 class AnalyticsAgent:
     AGENT_NAME = "Analytics Agent"
     ROLE = "Feature Risk Interpretation"
@@ -39,13 +49,13 @@ class AnalyticsAgent:
         signals: list[RiskSignal] = []
         score = 0
 
-        cibil = int(form_data.get("cibil", 0))
-        dti = float(form_data.get("dti", 0))
-        income = float(form_data.get("income", 1))
-        loan_amount = float(form_data.get("loan_amount", 0))
-        emis = float(form_data.get("emis", 0))
-        employment = form_data.get("employment", "")
-        age = int(form_data.get("age", 0))
+        cibil = _safe_int(form_data.get("cibil"), 0)
+        dti = _safe_float(form_data.get("dti"), 0)
+        income = _safe_float(form_data.get("income"), 1)
+        loan_amount = _safe_float(form_data.get("loan_amount"), 0)
+        emis = _safe_float(form_data.get("emis"), 0)
+        employment = form_data.get("employment") or ""
+        age = _safe_int(form_data.get("age"), 0)
 
         if cibil < 550:
             score += 25
