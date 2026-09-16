@@ -12,9 +12,9 @@ from typing import Any
 import joblib
 import pandas as pd
 
-MODEL_PATH = "loan_fraud_ensemble_model.pkl"
-PREPROCESSOR_PATH = "preprocessor.pkl"
-DATASET_PATH = "loan_applications.csv"
+MODEL_PATH = "loan_fraud_ensemble_model_v2.pkl"
+PREPROCESSOR_PATH = "preprocessor_v2.pkl"
+DATASET_PATH = "loan_applications_v2.csv"
 
 def calculate_dynamic_threshold(form_data: dict[str, Any]) -> float:
     """Calculates a precise fraud threshold tailored to the applicant's profile."""
@@ -103,7 +103,11 @@ class FraudPredictor:
                     "monthly_income": self._safe_float(form_data.get("income")),
                     "cibil_score": self._safe_int(form_data.get("cibil"), 500),
                     "existing_emis_monthly": self._safe_float(form_data.get("emis")),
-                    "debt_to_income_ratio": self._safe_float(form_data.get("dti")),
+                    # form_data["dti"] is a 0-1 fraction (the convention used across the web
+                    # form, API, and batch CSV); the training data's debt_to_income_ratio
+                    # column is on a 0-102 scale, so convert to match what the fitted
+                    # preprocessor expects.
+                    "debt_to_income_ratio": self._safe_float(form_data.get("dti")) * 100,
                     "property_ownership_status": form_data.get("property", "Rented"),
                     "applicant_age": self._safe_int(form_data.get("age"), 30),
                     "gender": form_data.get("gender", "Other"),
@@ -132,7 +136,10 @@ class FraudPredictor:
             "income": float(row.get("monthly_income", 0)),
             "cibil": int(row.get("cibil_score", 0)),
             "emis": float(row.get("existing_emis_monthly", 0)),
-            "dti": float(row.get("debt_to_income_ratio", 0)),
+            # debt_to_income_ratio in the raw dataset is on a 0-102 scale; form_mock
+            # feeds calculate_dynamic_threshold() and form_to_model_row(), both of which
+            # expect the 0-1 fraction convention used everywhere else in the app.
+            "dti": float(row.get("debt_to_income_ratio", 0)) / 100,
             "property": str(row.get("property_ownership_status", "")),
             "age": int(row.get("applicant_age", 0)),
             "gender": str(row.get("gender", "")),

@@ -17,8 +17,8 @@ import torch
 
 from ml.autoencoder_model import TabularAutoencoder
 
-MODEL_PATH = "autoencoder.pt"
-META_PATH = "autoencoder_meta.pkl"
+MODEL_PATH = "autoencoder_v2.pt"
+META_PATH = "autoencoder_meta_v2.pkl"
 
 
 @dataclass

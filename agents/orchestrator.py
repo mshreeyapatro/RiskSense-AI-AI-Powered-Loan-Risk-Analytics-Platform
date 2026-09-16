@@ -182,7 +182,10 @@ class RiskSenseOrchestrator:
             "income": float(row.get("monthly_income", 0)),
             "cibil": int(row.get("cibil_score", 0)),
             "emis": float(row.get("existing_emis_monthly", 0)),
-            "dti": float(row.get("debt_to_income_ratio", 0)),
+            # debt_to_income_ratio in the raw dataset is on a 0-102 scale; this form_data
+            # dict flows into AnalyticsAgent's dti > 0.65 rule and FraudPredictor's dti-based
+            # logic, both of which expect the 0-1 fraction convention used elsewhere.
+            "dti": float(row.get("debt_to_income_ratio", 0)) / 100,
             "property": str(row.get("property_ownership_status", "")),
             "age": int(row.get("applicant_age", 0)),
             "gender": str(row.get("gender", "")),

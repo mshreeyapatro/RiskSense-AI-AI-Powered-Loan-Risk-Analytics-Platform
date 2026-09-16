@@ -22,6 +22,12 @@ preprocessor.pkl
 loan_applications.csv
 loan_fraud_smote_balanced_dataset.csv
 
+# v2 (relabeled dataset experiment, now the deployed default — see UPDATE.md)
+!autoencoder_meta_v2.pkl
+!loan_fraud_ensemble_model_v2.pkl
+!preprocessor_v2.pkl
+!loan_applications_v2.csv
+
 # Generated reports
 *.docx
 
